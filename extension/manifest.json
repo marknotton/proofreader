@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Proofreader",
+  "description": "A proofreading assistant powered by Gemini",
+  "version": "1.0.0",
+  "author": "Mark Notton",
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon-16.png",
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    },
+    "default_title": "Proofreader"
+  },
+  "side_panel": {
+    "default_path": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "sidePanel",
+    "clipboardRead",
+    "clipboardWrite"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://generativelanguage.googleapis.com;"
+  }
+}
