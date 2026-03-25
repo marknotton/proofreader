@@ -29,12 +29,86 @@ export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem(API_KEY_STORAGE) || "")
   const [apiKeyInput, setApiKeyInput] = useState("")
   const [thinkingOverride, setThinkingOverride] = useState<number | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Pending context menu action — stored in a ref so the proofread callback can read it
+  const pendingModeRef = useRef<{ mode: "proofread" | "replace"; tabId?: number } | null>(null)
 
   // Resolve the effective thinking budget: manual override > style default > global default
   const currentStyle = styles.find((s) => s.name === activeStyle)
   const effectiveThinking = thinkingOverride ?? currentStyle?.thinking ?? DEFAULT_THINKING
 
+  // ── Toast helper ──
+  const showToast = useCallback((message: string, duration = 3000) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToast(message)
+    toastTimerRef.current = setTimeout(() => setToast(null), duration)
+  }, [])
+
+  // ── Core proofread logic (extracted so context menu can call it too) ──
+  const runProofread = useCallback(async (
+    text: string,
+    opts?: { mode?: "proofread" | "replace"; tabId?: number }
+  ) => {
+    const key = apiKey || localStorage.getItem(API_KEY_STORAGE) || ""
+    if (!text.trim() || !key) return
+
+    const style = styles.find((s) => s.name === activeStyle)
+    if (!style) return
+
+    // Store the mode so the completion handler knows what to do
+    pendingModeRef.current = opts?.mode ? { mode: opts.mode, tabId: opts.tabId } : null
+
+    setLoading(true)
+    setOutput("")
+    setError(null)
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    try {
+      let result = ""
+      const thinking = thinkingOverride ?? style.thinking ?? DEFAULT_THINKING
+      await proofread(
+        key,
+        style.prompt,
+        text.trim(),
+        (chunk) => {
+          result += chunk
+          setOutput(result)
+        },
+        controller.signal,
+        thinking
+      )
+
+      // If this was a "replace" action, send the result back to the content script
+      if (pendingModeRef.current?.mode === "replace" && pendingModeRef.current.tabId) {
+        try {
+          const chrome = (globalThis as any).chrome
+          chrome.runtime.sendMessage({
+            type: "REPLACE_TEXT",
+            text: result,
+            tabId: pendingModeRef.current.tabId,
+          })
+          showToast("Replaced")
+        } catch {
+          showToast("Could not replace text in page")
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        setError(err.message)
+      }
+    } finally {
+      setLoading(false)
+      pendingModeRef.current = null
+    }
+  }, [apiKey, activeStyle, styles, thinkingOverride, showToast])
+
+  // ── Init ──
   useEffect(() => {
     if (!apiKey) setSettingsView("api-key")
     setApiKeyInput(apiKey)
@@ -47,6 +121,33 @@ export default function App() {
       setThinkingOverride(null)
     }
   }, [styles, activeStyle])
+
+  // ── Listen for context menu messages from background.js ──
+  useEffect(() => {
+    const chrome = (globalThis as unknown as { chrome?: any }).chrome
+    if (!chrome?.runtime?.onMessage) return
+
+    const listener = (message: any) => {
+      if (message.type === "CONTEXT_MENU_EMPTY") {
+        showToast("No text selected")
+        return
+      }
+
+      if (message.type === "CONTEXT_MENU_TEXT") {
+        const { text, mode, tabId } = message
+        setInput(text)
+        setSettingsView("closed")
+
+        // Auto-submit after a tick so state has settled
+        setTimeout(() => {
+          runProofread(text, { mode, tabId })
+        }, 50)
+      }
+    }
+
+    chrome.runtime.onMessage.addListener(listener)
+    return () => chrome.runtime.onMessage.removeListener(listener)
+  }, [runProofread, showToast])
 
   const handleSaveKey = useCallback(() => {
     const trimmed = apiKeyInput.trim()
@@ -62,42 +163,9 @@ export default function App() {
     setStyles(persisted)
   }, [])
 
-  const handleSubmit = useCallback(async () => {
-    if (!input.trim() || !apiKey) return
-
-    const style = styles.find((s) => s.name === activeStyle)
-    if (!style) return
-
-    setLoading(true)
-    setOutput("")
-    setError(null)
-
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    try {
-      let result = ""
-      const thinking = thinkingOverride ?? style.thinking ?? DEFAULT_THINKING
-      await proofread(
-        apiKey,
-        style.prompt,
-        input.trim(),
-        (chunk) => {
-          result += chunk
-          setOutput(result)
-        },
-        controller.signal,
-        thinking
-      )
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name !== "AbortError") {
-        setError(err.message)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [input, apiKey, activeStyle, styles, thinkingOverride])
+  const handleSubmit = useCallback(() => {
+    runProofread(input)
+  }, [input, runProofread])
 
   const handleCopy = useCallback(async () => {
     if (!output) return
@@ -236,6 +304,13 @@ export default function App() {
             placeholder="Paste or type your text here..."
             className="h-full text-sm"
           />
+
+          {/* Toast — positioned relative to the textarea */}
+          {toast && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-foreground text-background text-xs px-3 py-1.5 rounded-md shadow-lg pointer-events-none animate-fade-in z-10">
+              {toast}
+            </div>
+          )}
         </div>
 
         {/* Actions */}

@@ -23,8 +23,17 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "permissions": [
     "sidePanel",
+    "contextMenus",
+    "activeTab",
     "clipboardRead",
     "clipboardWrite"
   ],
