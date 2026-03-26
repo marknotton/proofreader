@@ -23,9 +23,14 @@ import {
 import { proofread } from "./lib/proofread"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, AlertTriangle } from "lucide-react"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, AlertTriangle, Wand2 } from "lucide-react"
 
 const HIDE_DONATION_KEY = "proofreader_hide_donation"
+const AUTO_SHOW_KEY = "proofreader_auto_show"
+const AUTO_ENABLED_KEY = "proofreader_auto_enabled"
+const AUTO_PASTE_KEY = "proofreader_auto_paste"
+const AUTO_TYPE_KEY = "proofreader_auto_type"
+const AUTO_DELAY_KEY = "proofreader_auto_delay"
 const BMC_URL = "https://buymeacoffee.com/marknotton"
 const THEME_KEY = "proofreader_theme"
 type Theme = "light" | "dark" | "auto"
@@ -64,6 +69,24 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [contextMenuEnabled, setContextMenuEnabled] = useState(false)
   const [hideDonation, setHideDonation] = useState(() => localStorage.getItem(HIDE_DONATION_KEY) === "true")
+
+  // ── Auto-proofread state ──
+  const [autoShow, setAutoShow] = useState(() => localStorage.getItem(AUTO_SHOW_KEY) !== "false") // visible by default
+  const [autoEnabled, setAutoEnabled] = useState(() => localStorage.getItem(AUTO_ENABLED_KEY) === "true") // off by default
+  const [autoPaste, setAutoPaste] = useState(() => localStorage.getItem(AUTO_PASTE_KEY) !== "false") // on by default when auto is shown
+  const [autoType, setAutoType] = useState(() => localStorage.getItem(AUTO_TYPE_KEY) === "true") // off by default
+  const [autoDelay, setAutoDelay] = useState(() => {
+    const saved = localStorage.getItem(AUTO_DELAY_KEY)
+    return saved ? Math.max(1, Math.min(30, Number(saved))) : 3
+  })
+  const [timerActive, setTimerActive] = useState(false)
+
+  // Refs for auto-proofread timer management
+  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerResetRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastProofreadTextRef = useRef("")
+  const isPasteRef = useRef(false)
+
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem(THEME_KEY) as Theme | null
     const t = saved || "auto"
@@ -160,9 +183,9 @@ export default function App() {
   }, [apiKey, provider, activeStyle, styles, thinkingOverride, showToast])
 
   // Keep a ref to the latest runProofread so the storage listener (which never
-  // re-subscribes) always calls the current version
+  // re-subscribes) always calls the current version.
+  // Note: this ref is updated to the wrapped version in the auto-proofread section below.
   const runProofreadRef = useRef(runProofread)
-  useEffect(() => { runProofreadRef.current = runProofread }, [runProofread])
 
   const showToastRef = useRef(showToast)
   useEffect(() => { showToastRef.current = showToast }, [showToast])
@@ -302,9 +325,129 @@ export default function App() {
     setStyles(persisted)
   }, [])
 
+  // ── Auto-proofread helpers ──
+  /** Returns true when at least 5 characters differ from last proofread */
+  const hasSignificantChanges = useCallback((current: string, previous: string): boolean => {
+    if (!previous) return current.trim().length >= 5
+    const a = current.trim()
+    const b = previous.trim()
+    if (a === b) return false
+    // Quick length-based check first
+    if (Math.abs(a.length - b.length) >= 5) return true
+    // Character-by-character diff count
+    let diffs = 0
+    const maxLen = Math.max(a.length, b.length)
+    for (let i = 0; i < maxLen; i++) {
+      if (a[i] !== b[i]) diffs++
+      if (diffs >= 5) return true
+    }
+    return false
+  }, [])
+
+  const clearAutoTimer = useCallback(() => {
+    if (autoTimerRef.current) {
+      clearTimeout(autoTimerRef.current)
+      autoTimerRef.current = null
+    }
+    if (timerResetRef.current) {
+      clearTimeout(timerResetRef.current)
+      timerResetRef.current = null
+    }
+    setTimerActive(false)
+  }, [])
+
+  const startAutoTimer = useCallback((text: string) => {
+    clearAutoTimer()
+    if (!hasSignificantChanges(text, lastProofreadTextRef.current)) return
+
+    // Small gap so CSS transition resets (remove class, wait 300ms, re-add)
+    timerResetRef.current = setTimeout(() => {
+      setTimerActive(true)
+      autoTimerRef.current = setTimeout(() => {
+        setTimerActive(false)
+        lastProofreadTextRef.current = text
+        runProofreadRef.current(text)
+      }, autoDelay * 1000)
+    }, 320) // just over 0.3s reverse transition
+  }, [autoDelay, clearAutoTimer, hasSignificantChanges])
+
+  // Update lastProofreadTextRef when a manual proofread completes
+  const originalRunProofread = runProofread
+  const wrappedRunProofread = useCallback(async (
+    text: string,
+    opts?: { mode?: "proofread" | "replace"; tabId?: number; styleName?: string }
+  ) => {
+    lastProofreadTextRef.current = text
+    clearAutoTimer()
+    return originalRunProofread(text, opts)
+  }, [originalRunProofread, clearAutoTimer])
+
+  // Update the ref to point to the wrapped version
+  useEffect(() => { runProofreadRef.current = wrappedRunProofread }, [wrappedRunProofread])
+
+  const handleInputChange = useCallback((value: string) => {
+    setInput(value)
+    // If this was a paste event, isPasteRef will be true (set in onPaste)
+    if (isPasteRef.current) {
+      isPasteRef.current = false
+      if (autoEnabled && autoPaste && hasSignificantChanges(value, lastProofreadTextRef.current)) {
+        clearAutoTimer()
+        lastProofreadTextRef.current = value
+        // Small delay for state to settle
+        setTimeout(() => runProofreadRef.current(value), 50)
+      }
+      return
+    }
+    // Typing-based auto-proofread
+    if (autoEnabled && autoType) {
+      startAutoTimer(value)
+    }
+  }, [autoEnabled, autoPaste, autoType, clearAutoTimer, hasSignificantChanges, startAutoTimer])
+
+  const handlePaste = useCallback(() => {
+    isPasteRef.current = true
+  }, [])
+
+  // ── Auto-proofread settings persistence ──
+  const handleAutoShowToggle = useCallback((v: boolean) => {
+    setAutoShow(v)
+    localStorage.setItem(AUTO_SHOW_KEY, String(v))
+    if (!v) {
+      setAutoEnabled(false)
+      localStorage.setItem(AUTO_ENABLED_KEY, "false")
+      clearAutoTimer()
+    }
+  }, [clearAutoTimer])
+
+  const handleAutoEnabledToggle = useCallback(() => {
+    const next = !autoEnabled
+    setAutoEnabled(next)
+    localStorage.setItem(AUTO_ENABLED_KEY, String(next))
+    if (!next) clearAutoTimer()
+  }, [autoEnabled, clearAutoTimer])
+
+  const handleAutoPasteToggle = useCallback((v: boolean) => {
+    setAutoPaste(v)
+    localStorage.setItem(AUTO_PASTE_KEY, String(v))
+  }, [])
+
+  const handleAutoTypeToggle = useCallback((v: boolean) => {
+    setAutoType(v)
+    localStorage.setItem(AUTO_TYPE_KEY, String(v))
+    if (!v) clearAutoTimer()
+  }, [clearAutoTimer])
+
+  const handleAutoDelayChange = useCallback((v: number) => {
+    const clamped = Math.max(1, Math.min(30, v))
+    setAutoDelay(clamped)
+    localStorage.setItem(AUTO_DELAY_KEY, String(clamped))
+  }, [])
+
   const handleSubmit = useCallback(() => {
+    lastProofreadTextRef.current = input
+    clearAutoTimer()
     runProofread(input)
-  }, [input, runProofread])
+  }, [input, runProofread, clearAutoTimer])
 
   const handleCopy = useCallback(async () => {
     if (!output) return
@@ -319,7 +462,9 @@ export default function App() {
     setOutput("")
     setError(null)
     setLoading(false)
-  }, [])
+    clearAutoTimer()
+    lastProofreadTextRef.current = ""
+  }, [clearAutoTimer])
 
   // ── Thinking slider display logic ──
   const renderThinkingSlider = () => {
@@ -554,6 +699,106 @@ export default function App() {
           </label>
         </div>
 
+        {/* Auto-proofread settings */}
+        <div className="border-t border-input pt-3 flex flex-col gap-3">
+          <label className="flex items-center justify-between gap-3 cursor-pointer">
+            <div>
+              <p className="text-sm">Auto-proofread button</p>
+              <p className="text-xs text-muted-foreground">
+                Show auto-proofread toggle on the main page
+              </p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={autoShow}
+              onClick={() => handleAutoShowToggle(!autoShow)}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                autoShow ? "bg-primary" : "bg-input"
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
+                  autoShow ? "translate-x-[18px]" : "translate-x-[3px]"
+                }`}
+              />
+            </button>
+          </label>
+
+          <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
+            <div>
+              <p className="text-sm">Auto on paste</p>
+              <p className="text-xs text-muted-foreground">
+                Proofread immediately when text is pasted
+              </p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={autoPaste}
+              onClick={() => handleAutoPasteToggle(!autoPaste)}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                autoPaste ? "bg-primary" : "bg-input"
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
+                  autoPaste ? "translate-x-[18px]" : "translate-x-[3px]"
+                }`}
+              />
+            </button>
+          </label>
+
+          <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
+            <div>
+              <p className="text-sm">
+                Auto after typing
+                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Beta</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Proofread after a pause in typing
+              </p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={autoType}
+              onClick={() => handleAutoTypeToggle(!autoType)}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                autoType ? "bg-primary" : "bg-input"
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
+                  autoType ? "translate-x-[18px]" : "translate-x-[3px]"
+                }`}
+              />
+            </button>
+          </label>
+
+          {autoShow && autoType && (
+            <div className="flex items-center gap-3">
+              <label className="text-sm text-muted-foreground shrink-0">Delay</label>
+              <input
+                type="range"
+                min={1}
+                max={15}
+                step={1}
+                value={autoDelay}
+                onChange={(e) => handleAutoDelayChange(Number(e.target.value))}
+                className="flex-1 h-1.5 accent-primary"
+              />
+              <span className="text-xs text-muted-foreground w-8 text-right">{autoDelay}s</span>
+            </div>
+          )}
+
+          {autoShow && (
+            <div className="flex items-start gap-2 rounded-md bg-destructive/5 border border-destructive/20 p-2.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Auto-proofreading on typing will use more tokens and may increase your API costs. Use with a reasonable delay.
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="border-t border-input pt-3">
           <Button
             variant="outline"
@@ -687,7 +932,8 @@ export default function App() {
         <div className="relative flex-1 min-h-[120px]">
           <Textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onPaste={handlePaste}
             placeholder="Paste or type your text here..."
             className="h-full text-sm"
           />
@@ -716,6 +962,21 @@ export default function App() {
           <Button variant="outline" size="icon" onClick={handleClear} title="Clear">
             <Eraser className="h-4 w-4" />
           </Button>
+          {autoShow && (
+            <Button
+              variant={autoEnabled ? "default" : "outline"}
+              size="icon"
+              onClick={handleAutoEnabledToggle}
+              title={autoEnabled ? "Auto-proofread on" : "Auto-proofread off"}
+              className={`auto-btn ${timerActive ? "timer-active" : ""} ${
+                autoEnabled ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""
+              }`}
+              style={timerActive ? { "--timer-duration": `${autoDelay}s` } as React.CSSProperties : undefined}
+            >
+              <span className="auto-btn-timer" style={timerActive ? { transitionDuration: `${autoDelay}s` } : undefined} />
+              <Wand2 className="h-4 w-4 relative z-10" />
+            </Button>
+          )}
         </div>
 
         {error && (

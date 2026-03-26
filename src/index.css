@@ -81,3 +81,24 @@ body {
 .animate-fade-in {
   animation: fade-in 0.15s ease-out;
 }
+
+/* Auto-proofread button timer fill */
+.auto-btn {
+  position: relative;
+  overflow: hidden;
+}
+.auto-btn-timer {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0.12;
+  transform-origin: 50% 100%;
+  scale: 1 0;
+  transition: scale 0.3s ease-out;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.auto-btn.timer-active .auto-btn-timer {
+  scale: 1 1;
+  /* transition-duration is set via inline style to match user-configured delay */
+}
