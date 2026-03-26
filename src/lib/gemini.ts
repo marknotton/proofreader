@@ -16,7 +16,9 @@ export async function proofread(
 ): Promise<void> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${apiKey}`
 
-  const maxOutputTokens = Math.min(2048, 1024 + (thinkingBudget ?? 0) / 8)
+  const { system, user } = buildPrompt(systemPrompt, text)
+
+  const maxOutputTokens = Math.min(4096, 2048 + (thinkingBudget ?? 0) / 4)
 
   const generationConfig: Record<string, unknown> = {
     temperature: 0.2,
@@ -34,10 +36,13 @@ export async function proofread(
     headers: { "Content-Type": "application/json" },
     signal,
     body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: system }],
+      },
       contents: [
         {
           role: "user",
-          parts: [{ text: buildPrompt(systemPrompt, text) }],
+          parts: [{ text: user }],
         },
       ],
       generationConfig,

@@ -7,7 +7,7 @@ const THINKING_BUDGETS = [1024, 4096, 10000] as const
 
 /**
  * Calls the Anthropic Messages API with streaming (SSE).
- * Uses extended thinking when effort > 0.
+ * Uses proper system/user role separation.
  */
 export async function proofread(
   apiKey: string,
@@ -19,19 +19,19 @@ export async function proofread(
 ): Promise<void> {
   const url = "https://api.anthropic.com/v1/messages"
 
+  const { system, user } = buildPrompt(systemPrompt, text)
+
   const thinkingBudget = effortIndex !== undefined && effortIndex >= 0 && effortIndex <= 2
     ? THINKING_BUDGETS[effortIndex]
     : THINKING_BUDGETS[1]
 
   const body: Record<string, unknown> = {
     model: CLAUDE_MODEL,
-    max_tokens: 2048 + thinkingBudget,
+    max_tokens: 4096 + thinkingBudget,
     stream: true,
+    system,
     messages: [
-      {
-        role: "user",
-        content: buildPrompt(systemPrompt, text),
-      },
+      { role: "user", content: user },
     ],
   }
 

@@ -4,7 +4,7 @@ const GROK_MODEL = "grok-3-mini-fast"
 
 /**
  * Calls the xAI Grok API with streaming.
- * Grok uses the OpenAI-compatible chat completions format.
+ * Uses proper system/user role separation (OpenAI-compatible format).
  */
 export async function proofread(
   apiKey: string,
@@ -16,16 +16,16 @@ export async function proofread(
 ): Promise<void> {
   const url = "https://api.x.ai/v1/chat/completions"
 
+  const { system, user } = buildPrompt(systemPrompt, text)
+
   const body: Record<string, unknown> = {
     model: GROK_MODEL,
     stream: true,
     temperature: 0.2,
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [
-      {
-        role: "user",
-        content: buildPrompt(systemPrompt, text),
-      },
+      { role: "system", content: system },
+      { role: "user", content: user },
     ],
   }
 

@@ -1,48 +1,143 @@
 # Proofreader
 
-A lightweight Chrome sidebar extension for proofreading and rewriting text, powered by Google's Gemini API.
+## Your writing, sharper. Instantly.
 
-Built as a personal tool for quick text cleanup — grammar fixes, tone adjustments, and commit message formatting — without leaving the browser.
+Proofreader is a Chrome side panel that connects directly to your AI provider and fixes your text — with no accounts, no subscriptions, and nothing stored anywhere but your own machine.
 
-## Why
+---
 
-Most AI writing tools are either bloated web apps or overpriced subscriptions for something that should be simple. This extension runs entirely in Chrome's sidebar panel, calls Gemini's free tier directly, and does one thing well: takes rough text in, gives polished text back.
+## Built for writers who get things done
 
-No accounts. No servers. No middlemen. Your API key stays in your browser.
+Proofreader lives in your browser's side panel, always one click away. Paste in anything — an email, a Slack message, a commit note, a blog post — and get back clean, corrected prose in seconds.
 
-## How it works
+No app switching. No copying text into a chat window. No AI trying to have a conversation with you about it.
 
-Paste or type text into the sidebar, pick a style, and hit Proofread. The response streams back in real time. If the output contains code blocks, each one gets its own copy button.
+---
 
-A thinking slider lets you trade speed for quality per request. Grammar fixes run with zero thinking (near-instant). Commit summaries get a bigger budget for restructuring and categorisation.
+## Your AI, your rules
+
+### Four AI providers. Zero lock-in.
+
+Use whichever AI you already pay for, or the one that's free right now.
+
+Proofreader works with four major AI providers. Bring your own API key and connect directly — there's no middleman server, no account to create, and no one else sees your text.
+
+- **Google (Gemini)** — Free tier with generous limits. Good for everyday proofreading.
+- **OpenAI (ChatGPT)** — GPT-4o-mini. Fast and cost-effective for light editing.
+- **Anthropic (Claude)** — Strong at nuanced, precise rewrites.
+- **xAI (Grok)** — A capable alternative with a growing API ecosystem.
+
+Switch between providers at any time. Each one keeps its own API key.
+
+---
 
 ## Styles
 
-Styles are defined as a simple array in `src/lib/styles.ts`. Each one has a name, a prompt, and an optional thinking budget. Add, remove, or reorder them to suit your workflow.
+### Write for the room, not just the rulebook
 
-The defaults:
+Different text needs different handling. Styles let you define exactly how each piece gets treated.
 
-- **Grammar Only** — Fixes spelling, grammar, and punctuation. Doesn't touch tone or wording. Fastest.
-- **Casual** — Rewrites in a friendly, conversational tone without being over the top.
-- **Neutral** — Restructures commit messages into categorised summaries with grouped output.
-- **Formal** — Polished, professional rewrite.
-- **Commits** — Parses rough commit messages into categorised, formatted summaries with commit links.
+Each style has its own prompt, tone, and thinking level. Four are built in, and you can add as many as you want.
 
-## Setup
+**Built-in styles:**
 
-1. Get a free API key from [Google AI Studio](https://aistudio.google.com/apikey)
-2. Install dependencies and build:
-   ```
-   npm install
-   npm run build
-   ```
-3. In Chrome, go to `chrome://extensions`, enable Developer Mode
-4. Click "Load unpacked" and select the `extension/` folder
-5. Click the extension icon — the sidebar opens and prompts for your API key on first launch
+- **Grammar Only** — Fixes spelling and grammar, nothing else
+- **Casual** — Relaxed, conversational tone
+- **Neutral** — Clear and balanced for general use
+- **Formal** — Polished and professional
 
-## Stack
+**Each style can be customised with:**
 
-Vite, React, TypeScript, Tailwind CSS, shadcn/ui components, and the Gemini REST API. No backend, no build server, no external dependencies at runtime.
+- A custom prompt (tone, domain, format)
+- Colour and icon for quick recognition
+- Smart Markdown rendering (with copy buttons for code blocks)
+- Per-provider thinking levels
+
+---
+
+## Thinking controls
+
+### Fast when you need speed. Deep when you need precision.
+
+Some requests need more thought than others. Proofreader lets you tune that per style and per provider.
+
+- **Gemini** — Token budget slider (0 to 8192)
+- **OpenAI & Claude** — Low, Medium, High effort modes
+- **Grok** — No additional reasoning layer
+
+You can also override thinking per session without changing your saved styles.
+
+---
+
+## Auto-proofread
+
+### Set it and forget it
+
+Proofreader can run automatically in the background.
+
+- **Auto on paste** — Starts instantly when text is pasted
+- **Auto after typing (Beta)** — Triggers after a short pause (configurable)
+- **Smart change detection** — Avoids unnecessary API calls for minor edits
+- **Timer indicator** — Subtle countdown so you know when it's about to run
+
+---
+
+## Context menu
+
+### Right-click. Done.
+
+Proofread selected text on any page without opening the panel.
+
+Enable the context menu and choose a style directly from the right-click menu. Results can appear in the panel or replace the original text in place.
+
+---
+
+## Privacy
+
+### Your text goes to the AI. Nowhere else.
+
+Proofreader makes a direct API call from your browser to your chosen provider.
+
+- No servers
+- No accounts
+- No tracking
+- No data storage
+
+Your API keys stay on your machine. Your text is never stored or logged.
+
+This is an open-source side project. You can check the code if you want to verify how it works.
+
+---
+
+## Lightweight by design
+
+A tool that stays out of your way.
+
+- Light, dark, and auto themes
+- Per-provider API key storage
+- Clear error messages (with optional raw output for debugging)
+- One-click copy for all outputs
+- No subscriptions or locked features
+
+---
+
+## Development / Installation
+
+If you want to run or contribute:
+
+1. Get an API key (e.g. https://aistudio.google.com/apikey for Gemini)
+2. Install and build: 
+```
+npm install
+npm run build
+```
+3. Open Chrome and go to `chrome://extensions`
+4. Enable Developer Mode
+5. Click **Load unpacked** and select the `extension/` folder
+
+The extension will prompt for an API key on first launch.
+
+---
 
 ## Author
 

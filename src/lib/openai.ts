@@ -7,7 +7,7 @@ const EFFORT_MAP = ["low", "medium", "high"] as const
 
 /**
  * Calls the OpenAI Chat Completions API with streaming.
- * Uses the reasoning_effort parameter for models that support it.
+ * Uses proper system/user role separation.
  */
 export async function proofread(
   apiKey: string,
@@ -19,16 +19,16 @@ export async function proofread(
 ): Promise<void> {
   const url = "https://api.openai.com/v1/chat/completions"
 
+  const { system, user } = buildPrompt(systemPrompt, text)
+
   const body: Record<string, unknown> = {
     model: OPENAI_MODEL,
     stream: true,
     temperature: 0.2,
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [
-      {
-        role: "user",
-        content: buildPrompt(systemPrompt, text),
-      },
+      { role: "system", content: system },
+      { role: "user", content: user },
     ],
   }
 

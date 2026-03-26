@@ -23,7 +23,7 @@ import {
 import { proofread } from "./lib/proofread"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, AlertTriangle, Wand2 } from "lucide-react"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, AlertTriangle, Wand2, Code2 } from "lucide-react"
 
 const HIDE_DONATION_KEY = "proofreader_hide_donation"
 const AUTO_SHOW_KEY = "proofreader_auto_show"
@@ -1031,6 +1031,14 @@ export default function App() {
               <div className={!(currentStyle?.markdown && output.includes("```")) ? "pr-8" : ""}>
                 <MarkdownOutput text={output} markdown={currentStyle?.markdown} />
               </div>
+              {currentStyle?.markdown && output.includes("```") && (
+                <div className="flex justify-end mt-2">
+                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50">
+                    <Code2 className="h-3 w-3" />
+                    Smart Markdown
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
