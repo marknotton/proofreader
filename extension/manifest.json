@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Proofreader",
-  "description": "A proofreading assistant powered by Gemini",
+  "description": "A proofreading assistant powered by AI",
   "version": "1.0.0",
   "author": "Mark Notton",
   "icons": {
@@ -34,10 +34,11 @@
     "sidePanel",
     "contextMenus",
     "activeTab",
+    "storage",
     "clipboardRead",
     "clipboardWrite"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://generativelanguage.googleapis.com;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://api.x.ai;"
   }
 }

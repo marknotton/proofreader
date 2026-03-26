@@ -1,10 +1,10 @@
 import { buildPrompt } from "./prompt"
 
-const GEMINI_MODEL = "gemini-2.5-flash"
+const GROK_MODEL = "grok-3-mini-fast"
 
 /**
- * Calls the Gemini API with the given system prompt and user text.
- * Streams the response back via a callback.
+ * Calls the xAI Grok API with streaming.
+ * Grok uses the OpenAI-compatible chat completions format.
  */
 export async function proofread(
   apiKey: string,
@@ -12,41 +12,36 @@ export async function proofread(
   text: string,
   onChunk: (text: string) => void,
   signal?: AbortSignal,
-  thinkingBudget?: number
+  _thinkingBudget?: number
 ): Promise<void> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${apiKey}`
+  const url = "https://api.x.ai/v1/chat/completions"
 
-  const maxOutputTokens = Math.min(2048, 1024 + (thinkingBudget ?? 0) / 8)
-
-  const generationConfig: Record<string, unknown> = {
+  const body: Record<string, unknown> = {
+    model: GROK_MODEL,
+    stream: true,
     temperature: 0.2,
-    maxOutputTokens,
-  }
-
-  if (thinkingBudget !== undefined) {
-    generationConfig.thinkingConfig = {
-      thinkingBudget,
-    }
+    max_tokens: 2048,
+    messages: [
+      {
+        role: "user",
+        content: buildPrompt(systemPrompt, text),
+      },
+    ],
   }
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
     signal,
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: buildPrompt(systemPrompt, text) }],
-        },
-      ],
-      generationConfig,
-    }),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`Gemini API error (${response.status}): ${err}`)
+    throw new Error(`Grok API error (${response.status}): ${err}`)
   }
 
   const reader = response.body?.getReader()
@@ -70,8 +65,8 @@ export async function proofread(
 
       try {
         const parsed = JSON.parse(data)
-        const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-        if (chunk) onChunk(chunk)
+        const delta = parsed.choices?.[0]?.delta?.content
+        if (delta) onChunk(delta)
       } catch {
         // skip malformed chunks
       }
