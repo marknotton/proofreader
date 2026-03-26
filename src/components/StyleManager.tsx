@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react"
+import { useI18n } from "../context/I18nContext"
 import { Button } from "./ui/button"
 import { Textarea } from "./ui/textarea"
 import {
@@ -46,6 +47,7 @@ type View =
   | { kind: "confirmImport"; incoming: ProofreadStyle[]; matchCount: number; newCount: number }
 
 export default function StyleManager({ styles, onChange, onBack }: StyleManagerProps) {
+  const { t } = useI18n()
   const [view, setView] = useState<View>({ kind: "list" })
   const [importError, setImportError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -138,7 +140,7 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
         try {
           const incoming = parseImportedStyles(reader.result as string)
           if (incoming.length === 0) {
-            setImportError("The file contained no styles.")
+            setImportError(t("styles.noStyles"))
             return
           }
 
@@ -177,10 +179,10 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center gap-2 text-destructive">
           <AlertTriangle className="h-5 w-5" />
-          <h3 className="font-semibold">Delete style</h3>
+          <h3 className="font-semibold">{t("styles.deleteHeading")}</h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          Are you sure you want to delete <strong>{view.style.name}</strong>? This can't be undone.
+          {t("styles.deleteConfirm", { name: view.style.name })}
         </p>
         <div className="flex gap-2">
           <Button
@@ -188,14 +190,14 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
             className="flex-1"
             onClick={handleConfirmDelete}
           >
-            Delete
+            {t("styles.deleteButton")}
           </Button>
           <Button
             variant="outline"
             className="flex-1"
             onClick={() => setView({ kind: "list" })}
           >
-            Cancel
+            {t("styles.cancel")}
           </Button>
         </div>
       </div>
@@ -208,33 +210,33 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-yellow-500" />
-          <h3 className="font-semibold">Import styles</h3>
+          <h3 className="font-semibold">{t("styles.importHeading")}</h3>
         </div>
         <div className="text-sm text-muted-foreground space-y-1">
           <p>
-            This will import <strong>{view.incoming.length}</strong> style{view.incoming.length !== 1 ? "s" : ""}:
+            {t("styles.importCount", { count: view.incoming.length, plural: view.incoming.length !== 1 ? "s" : "" })}
           </p>
           {view.newCount > 0 && (
             <p>
-              &bull; <strong>{view.newCount}</strong> new style{view.newCount !== 1 ? "s" : ""} will be added
+              &bull; {t("styles.importNew", { count: view.newCount, plural: view.newCount !== 1 ? "s" : "" })}
             </p>
           )}
           {view.matchCount > 0 && (
             <p>
-              &bull; <strong>{view.matchCount}</strong> existing style{view.matchCount !== 1 ? "s" : ""} will be overwritten
+              &bull; {t("styles.importOverwrite", { count: view.matchCount, plural: view.matchCount !== 1 ? "s" : "" })}
             </p>
           )}
         </div>
         <div className="flex gap-2">
           <Button className="flex-1" onClick={handleConfirmImport}>
-            Import
+            {t("styles.importButton")}
           </Button>
           <Button
             variant="outline"
             className="flex-1"
             onClick={() => setView({ kind: "list" })}
           >
-            Cancel
+            {t("styles.cancel")}
           </Button>
         </div>
       </div>
@@ -263,7 +265,7 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
         <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h3 className="font-semibold flex-1">Manage Styles</h3>
+        <h3 className="font-semibold flex-1">{t("styles.title")}</h3>
       </div>
 
       <div className="flex-1 overflow-auto space-y-1.5">
@@ -293,7 +295,7 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
                 size="icon"
                 className="h-7 w-7 shrink-0"
                 onClick={() => handleEdit(i)}
-                title="Edit"
+                title={t("styles.editTitle")}
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
@@ -302,7 +304,7 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
                 size="icon"
                 className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
                 onClick={() => handleRequestDelete(i)}
-                title="Delete"
+                title={t("styles.deleteTitle")}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -314,16 +316,16 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
       <div className="flex flex-col gap-2 pt-2 border-t border-input">
         <Button variant="outline" size="sm" onClick={handleAdd}>
           <Plus className="h-3.5 w-3.5" />
-          Add Style
+          {t("styles.addStyle")}
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="flex-1" onClick={handleExport}>
             <Download className="h-3.5 w-3.5" />
-            Export
+            {t("styles.export")}
           </Button>
           <Button variant="outline" size="sm" className="flex-1" onClick={handleImportClick}>
             <Upload className="h-3.5 w-3.5" />
-            Import
+            {t("styles.import")}
           </Button>
           <input
             ref={fileInputRef}
@@ -352,6 +354,7 @@ interface StyleFormProps {
 }
 
 function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFormProps) {
+  const { t } = useI18n()
   const [name, setName] = useState(initial.name)
   const [prompt, setPrompt] = useState(initial.prompt)
   const [icon, setIcon] = useState<string | undefined>(initial.icon)
@@ -372,15 +375,15 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
   const handleSave = useCallback(() => {
     const trimmedName = name.trim()
     if (!trimmedName) {
-      setError("Name is required")
+      setError(t("form.errorName"))
       return
     }
     if (!prompt.trim()) {
-      setError("Prompt is required")
+      setError(t("form.errorPrompt"))
       return
     }
     if (existingNames.includes(trimmedName.toLowerCase())) {
-      setError("A style with this name already exists")
+      setError(t("form.errorDuplicate"))
       return
     }
     onSave({
@@ -394,14 +397,14 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
   }, [name, prompt, thinkingByProvider, icon, color, markdown, existingNames, onSave])
 
   const geminiLabel = (v: number) =>
-    v === 0 ? "Off" : v <= 1024 ? "Fast" : v <= 4096 ? "Balanced" : "Thorough"
+    v === 0 ? t("thinking.off") : v <= 1024 ? t("thinking.fast") : v <= 4096 ? t("thinking.balanced") : t("thinking.thorough")
 
-  const effortLabels = ["Low", "Medium", "High"]
+  const effortLabels = [t("thinking.low"), t("thinking.medium"), t("thinking.high")]
 
   return (
     <div className="flex flex-col gap-3 p-4 h-full overflow-auto">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{isNew ? "Add Style" : "Edit Style"}</h3>
+        <h3 className="font-semibold">{isNew ? t("form.addTitle") : t("form.editTitle")}</h3>
         <Button variant="ghost" size="icon" onClick={onCancel}>
           <X className="h-4 w-4" />
         </Button>
@@ -409,7 +412,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
 
       {/* Name */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-muted-foreground">Name</label>
+        <label className="text-xs text-muted-foreground">{t("form.name")}</label>
         <input
           type="text"
           value={name}
@@ -417,7 +420,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
             setName(e.target.value)
             setError(null)
           }}
-          placeholder="e.g. Technical Docs"
+          placeholder={t("form.namePlaceholder")}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
@@ -432,7 +435,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
             const Ic = getIconComponent(icon)
             return Ic ? <Ic className="h-3.5 w-3.5" /> : <Ban className="h-3.5 w-3.5 opacity-40" />
           })()}
-          <span>Icon</span>
+          <span>{t("form.icon")}</span>
           <ChevronDown className={`h-3 w-3 ml-auto transition-transform ${showIcons ? "rotate-180" : ""}`} />
         </button>
         {showIcons && (
@@ -442,7 +445,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
               className={`flex items-center justify-center h-8 w-8 rounded transition-colors ${
                 !icon ? "bg-primary text-primary-foreground" : "hover:bg-accent text-muted-foreground"
               }`}
-              title="No icon"
+              title={t("form.noIcon")}
             >
               <Ban className="h-3.5 w-3.5" />
             </button>
@@ -481,7 +484,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
           ) : (
             <span className="h-3 w-3 rounded-full border-2 border-dashed border-muted-foreground/40" />
           )}
-          <span>Colour</span>
+          <span>{t("form.colour")}</span>
           <ChevronDown className={`h-3 w-3 ml-auto transition-transform ${showColors ? "rotate-180" : ""}`} />
         </button>
         {showColors && (
@@ -491,7 +494,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
               className={`h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all ${
                 !color ? "border-foreground scale-110" : "border-dashed border-muted-foreground/40 hover:border-muted-foreground"
               }`}
-              title="No colour"
+              title={t("form.noColour")}
             >
               <Ban className="h-3 w-3 text-muted-foreground/60" />
             </button>
@@ -512,14 +515,14 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
 
       {/* Prompt — fills remaining space */}
       <div className="flex flex-col gap-1.5 flex-1 min-h-0">
-        <label className="text-xs text-muted-foreground">Prompt</label>
+        <label className="text-xs text-muted-foreground">{t("form.prompt")}</label>
         <Textarea
           value={prompt}
           onChange={(e) => {
             setPrompt(e.target.value)
             setError(null)
           }}
-          placeholder="Instructions for how the AI should process the text..."
+          placeholder={t("form.promptPlaceholder")}
           className="flex-1 text-sm min-h-[80px]"
         />
       </div>
@@ -530,14 +533,14 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
           onClick={() => setShowThinking(!showThinking)}
           className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          <span>Thinking budgets</span>
+          <span>{t("form.thinking")}</span>
           <ChevronDown className={`h-3 w-3 ml-auto transition-transform ${showThinking ? "rotate-180" : ""}`} />
         </button>
 
         {showThinking && (
           <div className="flex flex-col gap-3 p-2 rounded-md border border-input bg-card">
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Controls how much each AI "thinks" before responding. Higher values may improve quality but take longer. Set per provider so it's ready regardless of which one you use.
+              {t("form.thinkingDesc")}
             </p>
 
             {PROVIDER_IDS.map((id) => {
@@ -598,11 +601,11 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
         <label className="flex items-center justify-between gap-3 cursor-pointer">
           <div>
             <p className="text-xs text-muted-foreground">
-              Smart Markdown
+              {t("form.markdown")}
               <span className="ml-1.5 text-[9px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1 py-0.5 rounded">Beta</span>
             </p>
             <p className="text-[10px] text-muted-foreground/70 leading-relaxed mt-0.5">
-              If the response contains markdown markup (code blocks, headings, etc.), the output will be rendered with formatting and per-block copy buttons.
+              {t("form.markdownDesc")}
             </p>
           </div>
           <button
@@ -626,7 +629,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
 
       <Button onClick={handleSave} className="mt-auto">
         <Save className="h-3.5 w-3.5" />
-        {isNew ? "Add Style" : "Save Changes"}
+        {isNew ? t("form.add") : t("form.save")}
       </Button>
     </div>
   )
