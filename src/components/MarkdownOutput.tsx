@@ -59,8 +59,8 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-export default function MarkdownOutput({ text }: { text: string }) {
-  const hasCodeBlocks = text.includes("```")
+export default function MarkdownOutput({ text, markdown = false }: { text: string; markdown?: boolean }) {
+  const hasCodeBlocks = markdown && text.includes("```")
 
   const blocks = useMemo(() => {
     if (!hasCodeBlocks) return null

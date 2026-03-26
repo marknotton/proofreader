@@ -1,20 +1,47 @@
+import { type ProviderId, PROVIDERS } from "./providers"
+
 export interface ProofreadStyle {
   name: string
   prompt: string
-  /** Gemini thinking budget (0 = no thinking/fastest, up to 24576 = deepest). Default: 1024 */
+  /** @deprecated Legacy single thinking value — migrated to thinkingByProvider on load */
   thinking?: number
+  /** Per-provider thinking budgets. Gemini: 0–8192, OpenAI/Claude: 0/1/2 effort index, Grok: unused */
+  thinkingByProvider?: Partial<Record<ProviderId, number>>
+  /** Lucide icon name (from the curated library) */
+  icon?: string
+  /** Colour key from the palette */
+  color?: string
+  /** When true, detect and render markdown code blocks with copy buttons */
+  markdown?: boolean
 }
 
-/**
- * Default styles shipped with the extension.
- * Users can delete these — if they nuke everything,
- * FALLBACK_STYLE gets added back so there's always at least one.
- */
 export const DEFAULT_THINKING = 1024
+
+/** Default per-provider thinking values */
+export const DEFAULT_THINKING_BY_PROVIDER: Record<ProviderId, number> = {
+  gemini: 1024,
+  openai: 1,
+  claude: 1,
+  grok: 0,
+}
+
+/** Get the thinking value for a specific provider from a style */
+export function getStyleThinking(style: ProofreadStyle, provider: ProviderId): number {
+  // Prefer per-provider value
+  if (style.thinkingByProvider?.[provider] !== undefined) {
+    return style.thinkingByProvider[provider]!
+  }
+  // Legacy fallback: use old `thinking` for gemini, provider defaults for others
+  if (provider === "gemini" && style.thinking !== undefined) {
+    return style.thinking
+  }
+  return PROVIDERS[provider].thinking.default
+}
 
 const FALLBACK_STYLE: ProofreadStyle = {
   name: "Grammar Only",
-  thinking: 0,
+  icon: "check",
+  thinkingByProvider: { gemini: 0, openai: 0, claude: 0, grok: 0 },
   prompt:
     "Fix only the grammar, spelling, and punctuation errors in the following text. Do not change the tone, style, or wording beyond what is necessary for correctness.",
 }
@@ -23,25 +50,46 @@ export const DEFAULT_STYLES: ProofreadStyle[] = [
   { ...FALLBACK_STYLE },
   {
     name: "Casual",
-    thinking: 0,
+    icon: "coffee",
+    thinkingByProvider: { gemini: 0, openai: 0, claude: 0, grok: 0 },
     prompt:
       "Rewrite the following text in a casual, friendly, conversational tone. Fix any grammar or spelling errors. Do not be too energetic, no exclamation marks or alike.",
   },
   {
     name: "Neutral",
-    thinking: 1024,
+    icon: "scale",
+    thinkingByProvider: { gemini: 1024, openai: 1, claude: 1, grok: 0 },
     prompt:
       "Rewrite the following text in a neutral, clear, and balanced tone. Fix any grammar or spelling errors. Avoid being overly casual or overly formal",
   },
   {
     name: "Formal",
-    thinking: 1024,
+    icon: "briefcase",
+    thinkingByProvider: { gemini: 1024, openai: 1, claude: 1, grok: 0 },
     prompt:
-        "Rewrite the following text in a formal, polished, professional tone. Fix any grammar or spelling errors.",
-  }
+      "Rewrite the following text in a formal, polished, professional tone. Fix any grammar or spelling errors.",
+  },
 ]
 
 const STYLES_STORAGE_KEY = "proofreader_styles"
+
+/**
+ * Migrate a style from legacy `thinking` (single number) to `thinkingByProvider`.
+ * Only runs if the style doesn't already have thinkingByProvider set.
+ */
+function migrateStyle(style: ProofreadStyle): ProofreadStyle {
+  if (style.thinkingByProvider) return style
+  const geminiVal = style.thinking ?? DEFAULT_THINKING
+  return {
+    ...style,
+    thinkingByProvider: {
+      gemini: geminiVal,
+      openai: DEFAULT_THINKING_BY_PROVIDER.openai,
+      claude: DEFAULT_THINKING_BY_PROVIDER.claude,
+      grok: 0,
+    },
+  }
+}
 
 /** Load styles from localStorage, falling back to defaults on first run */
 export function loadStyles(): ProofreadStyle[] {
@@ -49,7 +97,9 @@ export function loadStyles(): ProofreadStyle[] {
     const raw = localStorage.getItem(STYLES_STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as ProofreadStyle[]
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(migrateStyle)
+      }
     }
   } catch {
     // corrupted data — reset to defaults
@@ -80,11 +130,8 @@ export function parseImportedStyles(json: string): ProofreadStyle[] {
     if (typeof item.prompt !== "string" || !item.prompt.trim()) {
       throw new Error(`Style "${item.name}" must have a non-empty 'prompt'`)
     }
-    if (item.thinking !== undefined && typeof item.thinking !== "number") {
-      throw new Error(`Style "${item.name}" has invalid 'thinking' value`)
-    }
   }
-  return parsed as ProofreadStyle[]
+  return (parsed as ProofreadStyle[]).map(migrateStyle)
 }
 
 /**

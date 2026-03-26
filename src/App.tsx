@@ -6,7 +6,7 @@ import MarkdownOutput from "./components/MarkdownOutput"
 import StyleManager from "./components/StyleManager"
 import {
   type ProofreadStyle,
-  DEFAULT_THINKING,
+  getStyleThinking,
   loadStyles,
   saveStyles,
 } from "./lib/styles"
@@ -22,7 +22,8 @@ import {
 } from "./lib/providers"
 import { proofread } from "./lib/proofread"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, AlertTriangle } from "lucide-react"
+import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, AlertTriangle, Github } from "lucide-react"
 
 const HIDE_DONATION_KEY = "proofreader_hide_donation"
 const BMC_URL = "https://buymeacoffee.com/marknotton"
@@ -57,6 +58,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState(() => getProviderKey(getActiveProvider()))
   const [apiKeyInput, setApiKeyInput] = useState("")
   const [showApiInfo, setShowApiInfo] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
 
   const [thinkingOverride, setThinkingOverride] = useState<number | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -74,7 +76,7 @@ export default function App() {
 
   const providerConfig = PROVIDERS[provider]
   const currentStyle = styles.find((s) => s.name === activeStyle)
-  const effectiveThinking = thinkingOverride ?? currentStyle?.thinking ?? DEFAULT_THINKING
+  const effectiveThinking = thinkingOverride ?? (currentStyle ? getStyleThinking(currentStyle, provider) : providerConfig.thinking.default)
 
   // ── Toast ──
   const showToast = useCallback((message: string, duration = 3000) => {
@@ -111,7 +113,7 @@ export default function App() {
 
     try {
       let result = ""
-      const thinking = thinkingOverride ?? style.thinking ?? DEFAULT_THINKING
+      const thinking = thinkingOverride ?? getStyleThinking(style, provider)
 
       await proofread(
         provider,
@@ -327,12 +329,9 @@ export default function App() {
 
     if (cfg.type === "effort") {
       const labels = cfg.effortLabels || ["Low", "Medium", "High"]
-      // Map effectiveThinking to effort index: 0, 1, 2
       const effortIndex = thinkingOverride !== null
         ? thinkingOverride
-        : (currentStyle?.thinking !== undefined
-          ? Math.min(Math.round(currentStyle.thinking / 4096), labels.length - 1)
-          : cfg.default)
+        : (currentStyle ? getStyleThinking(currentStyle, provider) : cfg.default)
 
       return (
         <div className="flex items-center gap-2 px-4 pb-3">
@@ -608,6 +607,38 @@ export default function App() {
             </label>
           </div>
         </div>
+
+        {/* About */}
+        <div className="border-t border-input pt-3">
+          <button
+            onClick={() => setShowAbout(!showAbout)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-left"
+          >
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            <span>About Proofreader</span>
+            <ChevronDown className={`h-3.5 w-3.5 ml-auto shrink-0 transition-transform ${showAbout ? "rotate-180" : ""}`} />
+          </button>
+
+          {showAbout && (
+            <div className="mt-3 rounded-lg border border-input bg-card p-3 text-xs text-muted-foreground leading-relaxed flex flex-col gap-2">
+              <p>
+                Thanks for using Proofreader! This is a free, open-source side project built and maintained in my spare time. There are no ads, no tracking, and no data collection — just a simple tool that does one thing well.
+              </p>
+              <p>
+                If you run into issues, have feature ideas, or want to contribute, the project is on GitHub. Bug reports, pull requests, and feedback are all welcome.
+              </p>
+              <a
+                href="https://github.com/marknotton/proofreader"
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center gap-2 text-xs text-foreground hover:underline mt-1"
+              >
+                <Github className="h-3.5 w-3.5" />
+                github.com/marknotton/proofreader
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     )
   }
@@ -617,19 +648,27 @@ export default function App() {
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Style selector */}
       <div className="flex items-center gap-1.5 px-4 py-3 flex-wrap">
-        {styles.map((style) => (
-          <Button
-            key={style.name}
-            variant={activeStyle === style.name ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              setActiveStyle(style.name)
-              setThinkingOverride(null)
-            }}
-          >
-            {style.name}
-          </Button>
-        ))}
+        {styles.map((style) => {
+          const isActive = activeStyle === style.name
+          const IconComp = getIconComponent(style.icon)
+          const colorStyles = getStyleButtonStyles(style.color, isActive)
+
+          return (
+            <Button
+              key={style.name}
+              variant={colorStyles ? "outline" : isActive ? "default" : "outline"}
+              size="sm"
+              style={colorStyles}
+              onClick={() => {
+                setActiveStyle(style.name)
+                setThinkingOverride(null)
+              }}
+            >
+              {IconComp && <IconComp className="h-3.5 w-3.5" />}
+              {style.name}
+            </Button>
+          )
+        })}
         <div className="ml-auto flex gap-1">
           <Button variant="ghost" size="icon" onClick={() => setSettingsView("styles")} title="Manage styles">
             <SlidersHorizontal className="h-4 w-4" />
@@ -713,7 +752,7 @@ export default function App() {
         {output && (
           <Card className="flex-1 min-h-[120px] overflow-auto">
             <CardContent className="relative">
-              {!output.includes("```") && (
+              {!(currentStyle?.markdown && output.includes("```")) && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -728,8 +767,8 @@ export default function App() {
                   )}
                 </Button>
               )}
-              <div className={!output.includes("```") ? "pr-8" : ""}>
-                <MarkdownOutput text={output} />
+              <div className={!(currentStyle?.markdown && output.includes("```")) ? "pr-8" : ""}>
+                <MarkdownOutput text={output} markdown={currentStyle?.markdown} />
               </div>
             </CardContent>
           </Card>
