@@ -76,9 +76,14 @@ function syncContextMenus() {
   })
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
   syncContextMenus()
+
+  // Open the welcome/onboarding page on first install
+  if (details.reason === "install") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("welcome.html") })
+  }
 })
 
 chrome.runtime.onStartup.addListener(() => {
