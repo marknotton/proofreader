@@ -1,4 +1,5 @@
 import { buildPrompt } from "./prompt"
+import { readSSEStream } from "./stream"
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514"
 
@@ -8,6 +9,12 @@ const THINKING_BUDGETS = [1024, 4096, 10000] as const
 /**
  * Calls the Anthropic Messages API with streaming (SSE).
  * Uses proper system/user role separation.
+ * @param apiKey - The Anthropic API key
+ * @param systemPrompt - The system-level instruction prompt
+ * @param text - The user text to proofread
+ * @param onChunk - Callback invoked with each text chunk
+ * @param signal - Optional AbortSignal for cancellation
+ * @param effortIndex - Effort level: 0 (low), 1 (medium), 2 (high)
  */
 export async function proofread(
   apiKey: string,
@@ -67,32 +74,13 @@ export async function proofread(
   const reader = response.body?.getReader()
   if (!reader) throw new Error("No response body")
 
-  const decoder = new TextDecoder()
-  let buffer = ""
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split("\n")
-    buffer = lines.pop() || ""
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue
-      const data = line.slice(6).trim()
-      if (data === "[DONE]") return
-
-      try {
-        const parsed = JSON.parse(data)
-
-        // Anthropic SSE events: content_block_delta with type "text_delta"
-        if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
-          onChunk(parsed.delta.text)
-        }
-      } catch {
-        // skip malformed chunks
-      }
+  // Extract text from Anthropic SSE events
+  const extractText = (parsed: Record<string, unknown>): string | undefined => {
+    if (parsed.type === "content_block_delta" && (parsed.delta as Record<string, unknown>)?.type === "text_delta") {
+      return (parsed.delta as Record<string, unknown>).text as string | undefined
     }
+    return undefined
   }
+
+  await readSSEStream(reader, onChunk, extractText)
 }

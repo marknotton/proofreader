@@ -4,6 +4,7 @@
   "placeholder": "Pega o escribe tu texto aquí...",
   "copy": "Copiar al portapapeles",
   "clear": "Limpiar",
+  "cancel": "Cancelar",
   "manageStyles": "Gestionar estilos",
   "autoOn": "Revisión automática activada",
   "autoOff": "Revisión automática desactivada",
@@ -91,6 +92,8 @@
   "styles.importOverwrite": "Se sobreescribirá{plural} {count} estilo{plural} existente{plural}",
   "styles.importButton": "Importar",
   "styles.noStyles": "El archivo no contenía estilos.",
+  "styles.reorder": "Reordenar",
+  "styles.reorderDone": "Listo",
 
   "form.addTitle": "Añadir estilo",
   "form.editTitle": "Editar estilo",

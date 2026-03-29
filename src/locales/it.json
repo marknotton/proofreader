@@ -4,6 +4,7 @@
   "placeholder": "Incolla o digita il testo qui...",
   "copy": "Copia negli appunti",
   "clear": "Cancella",
+  "cancel": "Annulla",
   "manageStyles": "Gestisci stili",
   "autoOn": "Correzione automatica attiva",
   "autoOff": "Correzione automatica disattiva",
@@ -91,6 +92,8 @@
   "styles.importOverwrite": "{count} stile{plural} esistente{plural} verrà sovrascritto",
   "styles.importButton": "Importa",
   "styles.noStyles": "Il file non conteneva stili.",
+  "styles.reorder": "Riordina",
+  "styles.reorderDone": "Fatto",
 
   "form.addTitle": "Aggiungi stile",
   "form.editTitle": "Modifica stile",

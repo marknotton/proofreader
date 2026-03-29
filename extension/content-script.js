@@ -45,7 +45,7 @@ function getTextFromContext() {
   return ""
 }
 
-// ── Replace (multi-strategy, borrowed from battle-tested extensions) ──
+// ── Replace (multi-strategy approach for broad editor compatibility) ──
 
 function replaceInPinnedElement(text) {
   if (!pinnedElement) {

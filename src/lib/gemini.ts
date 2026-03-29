@@ -1,10 +1,17 @@
 import { buildPrompt } from "./prompt"
+import { readSSEStream } from "./stream"
 
 const GEMINI_MODEL = "gemini-2.5-flash"
 
 /**
  * Calls the Gemini API with the given system prompt and user text.
  * Streams the response back via a callback.
+ * @param apiKey - The Gemini API key
+ * @param systemPrompt - The system-level instruction prompt
+ * @param text - The user text to proofread
+ * @param onChunk - Callback invoked with each text chunk
+ * @param signal - Optional AbortSignal for cancellation
+ * @param thinkingBudget - Optional thinking budget in tokens (0-8192)
  */
 export async function proofread(
   apiKey: string,
@@ -57,29 +64,18 @@ export async function proofread(
   const reader = response.body?.getReader()
   if (!reader) throw new Error("No response body")
 
-  const decoder = new TextDecoder()
-  let buffer = ""
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split("\n")
-    buffer = lines.pop() || ""
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue
-      const data = line.slice(6).trim()
-      if (data === "[DONE]") return
-
-      try {
-        const parsed = JSON.parse(data)
-        const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-        if (chunk) onChunk(chunk)
-      } catch {
-        // skip malformed chunks
+  // Extract text from Gemini SSE events
+  const extractText = (parsed: Record<string, unknown>): string | undefined => {
+    const candidates = parsed.candidates as unknown[]
+    if (Array.isArray(candidates) && candidates[0]) {
+      const content = (candidates[0] as Record<string, unknown>)?.content as Record<string, unknown>
+      const parts = content?.parts as unknown[]
+      if (Array.isArray(parts) && parts[0]) {
+        return (parts[0] as Record<string, unknown>)?.text as string | undefined
       }
     }
+    return undefined
   }
+
+  await readSSEStream(reader, onChunk, extractText)
 }

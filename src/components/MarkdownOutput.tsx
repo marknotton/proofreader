@@ -1,11 +1,30 @@
+/**
+ * MarkdownOutput component for rendering text with optional code block support.
+ *
+ * Renders plain text or parses and displays markdown-style code blocks with copy functionality.
+ *
+ * @module components/MarkdownOutput
+ */
 import { useState, useMemo } from "react"
 import { Copy, Check } from "lucide-react"
 import { Button } from "./ui/button"
 
+/**
+ * Represents a text or code block parsed from markdown-style content.
+ */
 type Block =
   | { type: "text"; content: string }
   | { type: "code"; content: string }
 
+/**
+ * Parses a string into blocks of text and code sections.
+ *
+ * Splits content on triple backticks and marks alternating sections as text or code.
+ * Strips optional language hints from the first line of code blocks.
+ *
+ * @param {string} text - The text to parse
+ * @returns {Block[]} Array of parsed text and code blocks
+ */
 function parseBlocks(text: string): Block[] {
   const blocks: Block[] = []
   const parts = text.split("```")
@@ -33,6 +52,13 @@ function parseBlocks(text: string): Block[] {
   return blocks
 }
 
+/**
+ * Button component that copies text to clipboard with visual feedback.
+ *
+ * @param {Object} props - Component props
+ * @param {string} props.text - The text to copy
+ * @returns {React.ReactElement} The copy button element
+ */
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
 
@@ -59,6 +85,21 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
+/**
+ * Renders text output with optional markdown-style code block parsing.
+ *
+ * Parses and displays code blocks with copy buttons when markdown mode is enabled.
+ * Falls back to plain text display if markdown is disabled or no code blocks are found.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.text - The text to render
+ * @param {boolean} [props.markdown=false] - Enable markdown code block parsing
+ * @returns {React.ReactElement} The rendered output
+ *
+ * @example
+ * <MarkdownOutput text="Some text\n```code block```" markdown={true} />
+ */
 export default function MarkdownOutput({ text, markdown = false }: { text: string; markdown?: boolean }) {
   const hasCodeBlocks = markdown && text.includes("```")
 

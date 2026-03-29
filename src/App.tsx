@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "./components/ui/button"
 import { Textarea } from "./components/ui/textarea"
 import { Card, CardContent } from "./components/ui/card"
+import { Switch } from "./components/ui/switch"
 import MarkdownOutput from "./components/MarkdownOutput"
 import StyleManager from "./components/StyleManager"
 import {
@@ -23,7 +24,7 @@ import {
 import { proofread } from "./lib/proofread"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, AlertTriangle, Wand2, Code2 } from "lucide-react"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2 } from "lucide-react"
 import { useI18n } from "./context/I18nContext"
 import { LOCALE_IDS, LOCALE_NAMES, type Locale } from "./lib/i18n"
 
@@ -36,6 +37,8 @@ const AUTO_DELAY_KEY = "proofreader_auto_delay"
 const BMC_URL = "https://buymeacoffee.com/marknotton"
 const THEME_KEY = "proofreader_theme"
 type Theme = "light" | "dark" | "auto"
+const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
+const SUBMIT_SHORTCUT = isMac ? "⌘↵" : "Ctrl+↵"
 
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme)
@@ -47,7 +50,7 @@ function getChromeAPI(): any | null {
   return c?.storage ? c : null
 }
 
-type SettingsView = "closed" | "settings" | "styles"
+type SettingsView = "closed" | "settings" | "styles" | "provider"
 
 export default function App() {
   const { t, locale, changeLocale } = useI18n()
@@ -462,6 +465,23 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000)
   }, [output])
 
+  const handleCancel = useCallback(() => {
+    abortRef.current?.abort()
+    setLoading(false)
+    setError(null)
+  }, [])
+
+  // ── Keyboard shortcuts ──
+  // Escape cancels an in-progress request
+  useEffect(() => {
+    if (!loading) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleCancel()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [loading, handleCancel])
+
   const handleClear = useCallback(() => {
     abortRef.current?.abort()
     setInput("")
@@ -535,8 +555,102 @@ export default function App() {
         <StyleManager
           styles={styles}
           onChange={handleStylesChange}
-          onBack={() => setSettingsView("closed")}
+          onBack={() => setSettingsView("settings")}
         />
+      </div>
+    )
+  }
+
+  // ── Provider / API key sub-panel ──
+  if (settingsView === "provider") {
+    return (
+      <div className="flex flex-col h-screen bg-background text-foreground">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-input shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setSettingsView("settings")} className="shrink-0">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="font-semibold flex-1">{t("settings.provider")}</h2>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
+          {/* Provider selector */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("settings.provider")}</label>
+            <div className="relative">
+              <select
+                value={provider}
+                onChange={(e) => handleProviderChange(e.target.value as ProviderId)}
+                className="flex h-9 w-full appearance-none rounded-md border border-input bg-transparent px-3 py-1 pr-8 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {PROVIDER_IDS.map((id) => {
+                  const p = PROVIDERS[id]
+                  const hasKey = !!getProviderKey(id)
+                  return (
+                    <option key={id} value={id}>
+                      {p.label}{hasKey ? " ✓" : ""}
+                    </option>
+                  )
+                })}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+
+          {/* API key */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {t("settings.apiKey", { provider: providerConfig.name })}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveKey()}
+                placeholder={providerConfig.placeholder}
+                className="flex-1 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+              <Button onClick={handleSaveKey} disabled={!apiKeyInput.trim()} className="shrink-0">
+                {t("settings.save")}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.keyFrom")}{" "}
+              <a href={providerConfig.keyUrl} target="_blank" rel="noopener" className="underline hover:text-foreground">
+                {providerConfig.keyUrlLabel}
+              </a>
+            </p>
+            {providerConfig.freeTierNote && (
+              <p className="text-xs text-muted-foreground/70">{providerConfig.freeTierNote}</p>
+            )}
+          </div>
+
+          {/* Why do I need my own key */}
+          <div className="border-t border-input pt-3">
+            <button
+              onClick={() => setShowApiInfo(!showApiInfo)}
+              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-left"
+            >
+              <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{t("settings.whyKey")}</span>
+              <ChevronDown className={`h-3 w-3 ml-auto shrink-0 transition-transform ${showApiInfo ? "rotate-180" : ""}`} />
+            </button>
+            {showApiInfo && (
+              <div className="mt-3 rounded-lg border border-input bg-card p-3 text-xs text-muted-foreground leading-relaxed flex flex-col gap-2">
+                <p>{t("settings.keyP1")}</p>
+                <p>{t("settings.keyP2")}</p>
+                <p>{t("settings.keyP3", { period: BUILD_PERIOD })}</p>
+                <div className="flex flex-col gap-1.5 pl-1">
+                  <p><strong className="text-foreground">Google (Gemini)</strong> — {t("settings.provider.gemini").replace(/^Google \(Gemini\) — /, "")}</p>
+                  <p><strong className="text-foreground">OpenAI (ChatGPT)</strong> — {t("settings.provider.openai").replace(/^OpenAI \(ChatGPT\) — /, "")}</p>
+                  <p><strong className="text-foreground">Anthropic (Claude)</strong> — {t("settings.provider.claude").replace(/^Anthropic \(Claude\) — /, "")}</p>
+                  <p><strong className="text-foreground">xAI (Grok)</strong> — {t("settings.provider.grok").replace(/^xAI \(Grok\) — /, "")}</p>
+                </div>
+                <p className="mt-1 text-muted-foreground/70">{t("settings.keyFooter", { period: BUILD_PERIOD })}</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     )
   }
@@ -544,349 +658,207 @@ export default function App() {
   // ── Settings view ──
   if (settingsView === "settings") {
     const hasAnyKey = PROVIDER_IDS.some((id) => getProviderKey(id))
+    const activeProviderKey = !!getProviderKey(provider)
 
     return (
-      <div className="flex flex-col h-screen bg-background text-foreground p-4 gap-4 overflow-auto">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t("settings.title")}</h2>
+      <div className="flex flex-col h-screen bg-background text-foreground">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-input shrink-0">
+          <h2 className="font-semibold">{t("settings.title")}</h2>
           {hasAnyKey && (
-            <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")}>
+            <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")} aria-label="Close settings">
               <X className="h-4 w-4" />
             </Button>
           )}
         </div>
 
-        {/* Provider selector + API key */}
-        <div className="flex flex-col gap-3">
-          <label className="text-sm text-muted-foreground">{t("settings.provider")}</label>
-          <div className="relative">
-            <select
-              value={provider}
-              onChange={(e) => handleProviderChange(e.target.value as ProviderId)}
-              className="flex h-9 w-full appearance-none rounded-md border border-input bg-transparent px-3 py-1 pr-8 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        <div className="flex-1 overflow-auto p-4 flex flex-col gap-5">
+
+          {/* AI Provider */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("settings.provider")}</p>
+            <button
+              onClick={() => setSettingsView("provider")}
+              className="flex items-center justify-between gap-3 rounded-md border border-input px-3 py-2.5 text-sm hover:bg-accent transition-colors text-left"
             >
-              {PROVIDER_IDS.map((id) => {
-                const p = PROVIDERS[id]
-                const hasKey = !!getProviderKey(id)
-                return (
-                  <option key={id} value={id}>
-                    {p.label}{hasKey ? " \u2713" : ""}
-                  </option>
-                )
-              })}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <span className="font-medium">{providerConfig.name}</span>
+              <span className={`text-xs ${activeProviderKey ? "text-green-500" : "text-destructive"}`}>
+                {activeProviderKey ? "Key saved ✓" : "No key set"}
+              </span>
+            </button>
           </div>
 
-          <label className="text-sm text-muted-foreground">
-            {t("settings.apiKey", { provider: providerConfig.name })}
-          </label>
-          <input
-            type="password"
-            value={apiKeyInput}
-            onChange={(e) => setApiKeyInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSaveKey()}
-            placeholder={providerConfig.placeholder}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-          <p className="text-xs text-muted-foreground">
-            {t("settings.keyFrom")}{" "}
-            <a
-              href={providerConfig.keyUrl}
-              target="_blank"
-              rel="noopener"
-              className="underline hover:text-foreground"
-            >
-              {providerConfig.keyUrlLabel}
-            </a>
-          </p>
-          <p className="text-xs text-muted-foreground/80">
-            {providerConfig.freeTierNote}
-          </p>
-          <Button onClick={handleSaveKey} disabled={!apiKeyInput.trim()}>
-            {t("settings.save")}
-          </Button>
-        </div>
-
-        {/* "Why do I need my own API key?" info block */}
-        <div className="border-t border-input pt-3">
-          <button
-            onClick={() => setShowApiInfo(!showApiInfo)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-left"
-          >
-            <Info className="h-3.5 w-3.5 shrink-0" />
-            <span>{t("settings.whyKey")}</span>
-            <ChevronDown className={`h-3.5 w-3.5 ml-auto shrink-0 transition-transform ${showApiInfo ? "rotate-180" : ""}`} />
-          </button>
-
-          {showApiInfo && (
-            <div className="mt-3 rounded-lg border border-input bg-card p-3 text-xs text-muted-foreground leading-relaxed flex flex-col gap-2">
-              <p>{t("settings.keyP1")}</p>
-              <p>{t("settings.keyP2")}</p>
-              <p>{t("settings.keyP3", { period: BUILD_PERIOD })}</p>
-              <div className="flex flex-col gap-1.5 pl-1">
-                <p><strong className="text-foreground">Google (Gemini)</strong> — {t("settings.provider.gemini").replace(/^Google \(Gemini\) — /, "")}</p>
-                <p><strong className="text-foreground">OpenAI (ChatGPT)</strong> — {t("settings.provider.openai").replace(/^OpenAI \(ChatGPT\) — /, "")}</p>
-                <p><strong className="text-foreground">Anthropic (Claude)</strong> — {t("settings.provider.claude").replace(/^Anthropic \(Claude\) — /, "")}</p>
-                <p><strong className="text-foreground">xAI (Grok)</strong> — {t("settings.provider.grok").replace(/^xAI \(Grok\) — /, "")}</p>
-              </div>
-              <p className="mt-1 text-muted-foreground/70">{t("settings.keyFooter", { period: BUILD_PERIOD })}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Theme selector */}
-        <div className="border-t border-input pt-3">
-          <p className="text-sm mb-2">{t("settings.theme")}</p>
-          <div className="flex rounded-md border border-input overflow-hidden">
-            {([
-              { value: "light" as Theme, icon: Sun, labelKey: "settings.theme.light" },
-              { value: "auto" as Theme, icon: Monitor, labelKey: "settings.theme.auto" },
-              { value: "dark" as Theme, icon: Moon, labelKey: "settings.theme.dark" },
-            ]).map(({ value, icon: Icon, labelKey }) => (
-              <button
-                key={value}
-                onClick={() => handleThemeChange(value)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
-                  theme === value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-transparent text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {t(labelKey)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Context menu toggle */}
-        <div className="border-t border-input pt-3">
-          <label className="flex items-center justify-between gap-3 cursor-pointer">
-            <div>
-              <p className="text-sm">
-                {t("settings.contextMenu")}
-                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Beta</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.contextMenuDesc")}
-              </p>
-            </div>
-            <button
-              role="switch"
-              aria-checked={contextMenuEnabled}
-              onClick={() => handleContextMenuToggle(!contextMenuEnabled)}
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                contextMenuEnabled ? "bg-primary" : "bg-input"
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
-                  contextMenuEnabled ? "translate-x-[18px]" : "translate-x-[3px]"
-                }`}
-              />
-            </button>
-          </label>
-        </div>
-
-        {/* Auto-proofread settings */}
-        <div className="border-t border-input pt-3 flex flex-col gap-3">
-          <label className="flex items-center justify-between gap-3 cursor-pointer">
-            <div>
-              <p className="text-sm">{t("settings.autoShow")}</p>
-              <p className="text-xs text-muted-foreground">{t("settings.autoShowDesc")}</p>
-            </div>
-            <button
-              role="switch"
-              aria-checked={autoShow}
-              onClick={() => handleAutoShowToggle(!autoShow)}
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                autoShow ? "bg-primary" : "bg-input"
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
-                  autoShow ? "translate-x-[18px]" : "translate-x-[3px]"
-                }`}
-              />
-            </button>
-          </label>
-
-          <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
-            <div>
-              <p className="text-sm">{t("settings.autoPaste")}</p>
-              <p className="text-xs text-muted-foreground">{t("settings.autoPasteDesc")}</p>
-            </div>
-            <button
-              role="switch"
-              aria-checked={autoPaste}
-              onClick={() => handleAutoPasteToggle(!autoPaste)}
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                autoPaste ? "bg-primary" : "bg-input"
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
-                  autoPaste ? "translate-x-[18px]" : "translate-x-[3px]"
-                }`}
-              />
-            </button>
-          </label>
-
-          <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
-            <div>
-              <p className="text-sm">
-                {t("settings.autoType")}
-                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Beta</span>
-              </p>
-              <p className="text-xs text-muted-foreground">{t("settings.autoTypeDesc")}</p>
-            </div>
-            <button
-              role="switch"
-              aria-checked={autoType}
-              onClick={() => handleAutoTypeToggle(!autoType)}
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                autoType ? "bg-primary" : "bg-input"
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
-                  autoType ? "translate-x-[18px]" : "translate-x-[3px]"
-                }`}
-              />
-            </button>
-          </label>
-
-          {autoShow && autoType && (
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-muted-foreground shrink-0">{t("settings.autoDelay")}</label>
-              <input
-                type="range"
-                min={1}
-                max={15}
-                step={1}
-                value={autoDelay}
-                onChange={(e) => handleAutoDelayChange(Number(e.target.value))}
-                className="flex-1 h-1.5 accent-primary"
-              />
-              <span className="text-xs text-muted-foreground w-8 text-right">{autoDelay}s</span>
-            </div>
-          )}
-
-          {autoShow && (
-            <div className="flex items-start gap-2 rounded-md bg-destructive/5 border border-destructive/20 p-2.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {t("settings.autoWarning")}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-input pt-3">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setSettingsView("styles")}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            {t("settings.manageStyles")}
-          </Button>
-        </div>
-
-        {/* Donation box — always visible in settings */}
-        <div className="border-t border-input pt-3 mt-auto">
-          <div className="rounded-lg border border-input bg-card p-4 flex flex-col gap-3">
-            <div className="flex items-start gap-3">
-              <Heart className="h-5 w-5 text-pink-500 shrink-0 mt-0.5" />
-              <div className="text-xs text-muted-foreground leading-relaxed">
-                <p>{t("settings.donation.intro", { name: "Mark" })}</p>
-                <p className="mt-1.5">{t("settings.donation.ask")}</p>
-              </div>
-            </div>
-            <a
-              href={BMC_URL}
-              target="_blank"
-              rel="noopener"
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-[#FFDD00] text-[#000] text-sm font-medium h-9 px-4 hover:bg-[#FFDD00]/90 transition-colors"
-            >
-              <Coffee className="h-4 w-4" />
-              {t("settings.donation.button")}
-            </a>
-            <label className="flex items-center justify-between gap-3 cursor-pointer pt-1">
-              <p className="text-xs text-muted-foreground">{t("settings.donation.hide")}</p>
-              <button
-                role="switch"
-                aria-checked={hideDonation}
-                onClick={() => handleDonationToggle(!hideDonation)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                  hideDonation ? "bg-primary" : "bg-input"
-                }`}
-              >
-                <span
-                  className={`inline-block h-3.5 w-3.5 rounded-full bg-background shadow-sm transition-transform ${
-                    hideDonation ? "translate-x-[18px]" : "translate-x-[3px]"
+          {/* Appearance */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("settings.theme")}</p>
+            <div className="flex rounded-md border border-input overflow-hidden">
+              {([
+                { value: "light" as Theme, icon: Sun, labelKey: "settings.theme.light" },
+                { value: "auto" as Theme, icon: Monitor, labelKey: "settings.theme.auto" },
+                { value: "dark" as Theme, icon: Moon, labelKey: "settings.theme.dark" },
+              ]).map(({ value, icon: Icon, labelKey }) => (
+                <button
+                  key={value}
+                  onClick={() => handleThemeChange(value)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
+                    theme === value ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-accent"
                   }`}
-                />
-              </button>
-            </label>
-          </div>
-        </div>
-
-        {/* Language */}
-        <div className="border-t border-input pt-3 flex flex-col gap-2">
-          <label className="text-sm text-muted-foreground">{t("settings.language")}</label>
-          <div className="relative">
-            <select
-              value={locale}
-              onChange={(e) => changeLocale(e.target.value as Locale)}
-              className="flex h-9 w-full appearance-none rounded-md border border-input bg-transparent px-3 py-1 pr-8 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              {LOCALE_IDS.map((id) => (
-                <option key={id} value={id}>{LOCALE_NAMES[id]}</option>
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {t(labelKey)}
+                </button>
               ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            </div>
           </div>
-          <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
-            {t("settings.languageNote")}{" "}
-            <a
-              href="https://github.com/marknotton/proofreader/tree/main/src/locales"
-              target="_blank"
-              rel="noopener"
-              className="underline hover:text-muted-foreground"
-            >
-              {t("settings.languageContribute")}
-            </a>
-          </p>
-        </div>
 
-        {/* About */}
-        <div className="border-t border-input pt-3">
-          <button
-            onClick={() => setShowAbout(!showAbout)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-left"
-          >
-            <Info className="h-3.5 w-3.5 shrink-0" />
-            <span>{t("settings.about")}</span>
-            <ChevronDown className={`h-3.5 w-3.5 ml-auto shrink-0 transition-transform ${showAbout ? "rotate-180" : ""}`} />
-          </button>
+          {/* Language */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("settings.language")}</p>
+            <div className="relative">
+              <select
+                value={locale}
+                onChange={(e) => changeLocale(e.target.value as Locale)}
+                className="flex h-9 w-full appearance-none rounded-md border border-input bg-transparent px-3 py-1 pr-8 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {LOCALE_IDS.map((id) => (
+                  <option key={id} value={id}>{LOCALE_NAMES[id]}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            </div>
+            <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+              {t("settings.languageNote")}{" "}
+              <a href="https://github.com/marknotton/proofreader/tree/main/src/locales" target="_blank" rel="noopener" className="underline hover:text-muted-foreground">
+                {t("settings.languageContribute")}
+              </a>
+            </p>
+          </div>
 
-          {showAbout && (
-            <div className="mt-3 rounded-lg border border-input bg-card p-3 text-xs text-muted-foreground leading-relaxed flex flex-col gap-2">
-              <p>{t("settings.about.p1")}</p>
-              <p>{t("settings.about.p2")}</p>
+          {/* Behaviour */}
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Behaviour</p>
+
+            {/* Context menu */}
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div>
+                <p className="text-sm">
+                  {t("settings.contextMenu")}
+                  <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Beta</span>
+                </p>
+                <p className="text-xs text-muted-foreground">{t("settings.contextMenuDesc")}</p>
+              </div>
+              <Switch checked={contextMenuEnabled} onCheckedChange={handleContextMenuToggle} />
+            </label>
+
+            {/* Auto-proofread */}
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div>
+                <p className="text-sm">{t("settings.autoShow")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.autoShowDesc")}</p>
+              </div>
+              <Switch checked={autoShow} onCheckedChange={handleAutoShowToggle} />
+            </label>
+
+            <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
+              <div>
+                <p className="text-sm">{t("settings.autoPaste")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.autoPasteDesc")}</p>
+              </div>
+              <Switch checked={autoPaste} onCheckedChange={handleAutoPasteToggle} />
+            </label>
+
+            <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
+              <div>
+                <p className="text-sm">
+                  {t("settings.autoType")}
+                  <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Beta</span>
+                </p>
+                <p className="text-xs text-muted-foreground">{t("settings.autoTypeDesc")}</p>
+              </div>
+              <Switch checked={autoType} onCheckedChange={handleAutoTypeToggle} />
+            </label>
+
+            {autoShow && autoType && (
+              <div className="flex items-center gap-3 pl-1">
+                <label className="text-xs text-muted-foreground shrink-0">{t("settings.autoDelay")}</label>
+                <input
+                  type="range" min={1} max={15} step={1} value={autoDelay}
+                  onChange={(e) => handleAutoDelayChange(Number(e.target.value))}
+                  className="flex-1 h-1.5 accent-primary"
+                />
+                <span className="text-xs text-muted-foreground w-8 text-right">{autoDelay}s</span>
+              </div>
+            )}
+
+            {autoShow && (
+              <div className="flex items-start gap-2 rounded-md bg-destructive/5 border border-destructive/20 p-2.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{t("settings.autoWarning")}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Styles */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("styles.title")}</p>
+            <Button variant="outline" size="sm" onClick={() => setSettingsView("styles")}>
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {t("settings.manageStyles")}
+            </Button>
+          </div>
+
+          {/* Support */}
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Support</p>
+            <div className="rounded-lg border border-input bg-card p-4 flex flex-col gap-3">
+              <div className="flex items-start gap-3">
+                <Heart className="h-4 w-4 text-pink-500 shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="text-xs text-muted-foreground leading-relaxed">
+                  <p>{t("settings.donation.intro", { name: "Mark" })}</p>
+                  <p className="mt-1.5">{t("settings.donation.ask")}</p>
+                </div>
+              </div>
               <a
-                href="https://github.com/marknotton/proofreader"
+                href={BMC_URL}
                 target="_blank"
                 rel="noopener"
-                className="inline-flex items-center gap-2 text-xs text-foreground hover:underline mt-1"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#FFDD00] text-[#000] text-sm font-medium h-9 px-4 hover:bg-[#FFDD00]/90 transition-colors"
               >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                {t("settings.about.link")}
+                <Coffee className="h-4 w-4" />
+                {t("settings.donation.button")}
               </a>
+              <label className="flex items-center justify-between gap-3 cursor-pointer">
+                <p className="text-xs text-muted-foreground">{t("settings.donation.hide")}</p>
+                <Switch checked={hideDonation} onCheckedChange={handleDonationToggle} />
+              </label>
             </div>
-          )}
+          </div>
+
+          {/* About */}
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setShowAbout(!showAbout)}
+              className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors w-full text-left"
+            >
+              {t("settings.about")}
+              <ChevronDown className={`h-3 w-3 ml-auto shrink-0 transition-transform ${showAbout ? "rotate-180" : ""}`} />
+            </button>
+            {showAbout && (
+              <div className="rounded-lg border border-input bg-card p-3 text-xs text-muted-foreground leading-relaxed flex flex-col gap-2">
+                <p>{t("settings.about.p1")}</p>
+                <p>{t("settings.about.p2")}</p>
+                <a
+                  href="https://github.com/marknotton/proofreader"
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex items-center gap-2 text-xs text-foreground hover:underline mt-1"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                  {t("settings.about.link")}
+                </a>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     )
@@ -922,7 +894,7 @@ export default function App() {
           <Button variant="ghost" size="icon" onClick={() => setSettingsView("styles")} title={t("manageStyles")}>
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setSettingsView("settings")} title={t("settings.title")}>
+          <Button variant="ghost" size="icon" onClick={() => setSettingsView("settings")} title={t("settings.title")} aria-label={t("settings.title")}>
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -938,7 +910,14 @@ export default function App() {
             value={input}
             onChange={(e) => handleInputChange(e.target.value)}
             onPaste={handlePaste}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault()
+                if (!loading && input.trim()) handleSubmit()
+              }
+            }}
             placeholder={t("placeholder")}
+            aria-label={t("placeholder")}
             className="h-full text-sm"
           />
           {toast && (
@@ -949,29 +928,40 @@ export default function App() {
         </div>
 
         <div className="flex gap-2">
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || !input.trim()}
-            className="flex-1"
-          >
-            {loading ? (
-              <>
+          {loading ? (
+            <Button
+              onClick={handleCancel}
+              aria-label={t("cancel")}
+              title={`${t("cancel")} (Esc)`}
+              className="flex-1 group"
+            >
+              <span className="flex items-center gap-2 group-hover:hidden">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t("proofreading")}
-              </>
-            ) : (
-              t("proofread")
-            )}
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleClear} title={t("clear")}>
-            <Eraser className="h-4 w-4" />
-          </Button>
+              </span>
+              <span className="hidden items-center gap-2 group-hover:flex">
+                <X className="h-4 w-4" />
+                {t("cancel")}
+              </span>
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!input.trim()}
+              title={`${t("proofread")} (${SUBMIT_SHORTCUT})`}
+              className="flex-1"
+            >
+              {t("proofread")}
+            </Button>
+          )}
           {autoShow && (
             <Button
               variant={autoEnabled ? "default" : "outline"}
               size="icon"
               onClick={handleAutoEnabledToggle}
               title={autoEnabled ? t("autoOn") : t("autoOff")}
+              aria-label={autoEnabled ? t("autoOn") : t("autoOff")}
+              aria-pressed={autoEnabled}
               className={`auto-btn ${timerActive ? "timer-active" : ""} ${
                 autoEnabled ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""
               }`}
@@ -981,19 +971,23 @@ export default function App() {
               <Wand2 className="h-4 w-4 relative z-10" />
             </Button>
           )}
+          <Button variant="outline" size="icon" onClick={handleClear} title={t("clear")} aria-label={t("clear")}>
+            <Eraser className="h-4 w-4" />
+          </Button>
         </div>
 
         {error && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex flex-col gap-2">
+          <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex flex-col gap-2">
             <div className="flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" aria-hidden="true" />
               <p className="text-xs text-destructive flex-1">{error.message}</p>
               <button
                 onClick={() => { setError(null); setShowRawError(false) }}
                 className="text-destructive/60 hover:text-destructive shrink-0"
                 title={t("error.dismiss")}
+                aria-label={t("error.dismiss")}
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             </div>
             {error.raw !== error.message && (
@@ -1015,36 +1009,46 @@ export default function App() {
         )}
 
         {output && (
-          <Card className="flex-1 min-h-[120px] overflow-auto">
-            <CardContent className="relative">
-              {!(currentStyle?.markdown && output.includes("```")) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 h-7 w-7"
-                  onClick={handleCopy}
-                  title={t("copy")}
-                >
-                  {copied ? (
-                    <Check className="h-3.5 w-3.5 text-green-500" />
-                  ) : (
-                    <Copy className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-              )}
-              <div className={!(currentStyle?.markdown && output.includes("```")) ? "pr-8" : ""}>
-                <MarkdownOutput text={output} markdown={currentStyle?.markdown} />
-              </div>
-              {currentStyle?.markdown && output.includes("```") && (
-                <div className="flex justify-end mt-2">
-                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50">
-                    <Code2 className="h-3 w-3" />
-                    {t("smartMarkdown")}
-                  </span>
+          <div aria-live="polite" aria-label="Proofread output" className="contents">
+            <Card className="flex-1 min-h-[120px] overflow-auto">
+              <CardContent className="relative">
+                {!(currentStyle?.markdown && output.includes("```")) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7"
+                    onClick={handleCopy}
+                    title={t("copy")}
+                    aria-label={t("copy")}
+                  >
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-green-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                )}
+                <div className={!(currentStyle?.markdown && output.includes("```")) ? "pr-8" : ""}>
+                  <MarkdownOutput text={output} markdown={currentStyle?.markdown} />
                 </div>
+                {currentStyle?.markdown && output.includes("```") && (
+                  <div className="flex justify-end mt-2">
+                    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50">
+                      <Code2 className="h-3 w-3" />
+                      {t("smartMarkdown")}
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Button variant="outline" onClick={handleCopy} className="w-full">
+              {copied ? (
+                <><Check className="h-4 w-4 text-green-500" /> {t("copy")}</>
+              ) : (
+                <><Copy className="h-4 w-4" /> {t("copy")}</>
               )}
-            </CardContent>
-          </Card>
+            </Button>
+          </div>
         )}
       </div>
 

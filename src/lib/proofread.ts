@@ -7,6 +7,14 @@ import { proofread as grokProofread } from "./grok"
 /**
  * Unified proofreading dispatcher.
  * Routes to the correct provider API based on the selected provider ID.
+ * @param provider - The provider ID (gemini, openai, claude, grok)
+ * @param apiKey - The API key for the selected provider
+ * @param systemPrompt - The task-specific instruction prompt
+ * @param text - The user text to proofread
+ * @param onChunk - Callback invoked with each text chunk from the stream
+ * @param signal - Optional AbortSignal for cancellation
+ * @param thinking - Optional thinking/effort value (provider-specific interpretation)
+ * @throws Error if the provider is not recognized
  */
 export async function proofread(
   provider: ProviderId,

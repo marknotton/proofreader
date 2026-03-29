@@ -1,6 +1,9 @@
 import type { ProviderId } from "./providers"
 import { PROVIDERS } from "./providers"
 
+/**
+ * Cleaned and human-friendly error information.
+ */
 export interface SanitisedError {
   /** Human-friendly summary */
   message: string
@@ -11,6 +14,9 @@ export interface SanitisedError {
 /**
  * Attempts to extract a clean, human-readable error from the raw API error string.
  * Falls back to the raw string if parsing fails.
+ * @param raw - The raw error string from the API
+ * @param provider - The provider that generated the error
+ * @returns Sanitised error with human-friendly message
  */
 export function sanitiseError(raw: string, provider: ProviderId): SanitisedError {
   const label = PROVIDERS[provider].label

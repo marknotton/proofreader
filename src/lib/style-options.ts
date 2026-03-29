@@ -15,11 +15,17 @@ import {
 
 // ── Icon library ──
 
+/**
+ * Mapping of icon name to Lucide React component.
+ */
 export interface IconOption {
   name: string
   icon: LucideIcon
 }
 
+/**
+ * Curated library of available icons for style selection.
+ */
 export const STYLE_ICONS: IconOption[] = [
   // Writing & text
   { name: "pencil", icon: Pencil },
@@ -81,7 +87,11 @@ export const STYLE_ICONS: IconOption[] = [
 
 const iconMap = new Map(STYLE_ICONS.map((o) => [o.name, o.icon]))
 
-/** Look up a LucideIcon component by name. Returns undefined if not found. */
+/**
+ * Look up a LucideIcon component by name.
+ * @param name - The icon name to look up
+ * @returns The LucideIcon component, or undefined if not found
+ */
 export function getIconComponent(name?: string): LucideIcon | undefined {
   if (!name) return undefined
   return iconMap.get(name)
@@ -89,6 +99,9 @@ export function getIconComponent(name?: string): LucideIcon | undefined {
 
 // ── Color palette ──
 
+/**
+ * A color option for style customization.
+ */
 export interface ColorOption {
   key: string
   label: string
@@ -96,6 +109,9 @@ export interface ColorOption {
   value: string
 }
 
+/**
+ * Curated palette of available colors for style selection.
+ */
 export const STYLE_COLORS: ColorOption[] = [
   { key: "red", label: "Red", value: "#ef4444" },
   { key: "rose", label: "Rose", value: "#f43f5e" },
@@ -118,7 +134,11 @@ export const STYLE_COLORS: ColorOption[] = [
 
 const colorMap = new Map(STYLE_COLORS.map((c) => [c.key, c.value]))
 
-/** Get the hex value for a colour key. Returns undefined for "no colour". */
+/**
+ * Get the hex value for a colour key.
+ * @param key - The color key to look up
+ * @returns The hex color value, or undefined if not found or no key provided
+ */
 export function getColorValue(key?: string): string | undefined {
   if (!key) return undefined
   return colorMap.get(key)
@@ -126,9 +146,12 @@ export function getColorValue(key?: string): string | undefined {
 
 /**
  * Returns inline style objects for a style button.
- * - Active (selected): solid colour bg with white text
- * - Inactive: 12% colour bg tint with full colour text + border
- * - No colour: returns undefined (use default shadcn styling)
+ * Active (selected): solid colour bg with white text
+ * Inactive: 12% colour bg tint with full colour text + border
+ * No colour: returns undefined (use default shadcn styling)
+ * @param colorKey - The color key for the button style
+ * @param isActive - Whether the button is selected/active
+ * @returns React CSSProperties for the button, or undefined if no color specified
  */
 export function getStyleButtonStyles(
   colorKey?: string,

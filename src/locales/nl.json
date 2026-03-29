@@ -4,6 +4,7 @@
   "placeholder": "Plak of typ hier je tekst...",
   "copy": "Kopieer naar klembord",
   "clear": "Wissen",
+  "cancel": "Annuleren",
   "manageStyles": "Stijlen beheren",
   "autoOn": "Automatisch nakijken aan",
   "autoOff": "Automatisch nakijken uit",
@@ -91,6 +92,8 @@
   "styles.importOverwrite": "{count} bestaande stijl{plural} wordt overschreven",
   "styles.importButton": "Importeren",
   "styles.noStyles": "Het bestand bevatte geen stijlen.",
+  "styles.reorder": "Herordenen",
+  "styles.reorderDone": "Klaar",
 
   "form.addTitle": "Stijl toevoegen",
   "form.editTitle": "Stijl bewerken",

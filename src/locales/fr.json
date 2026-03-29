@@ -4,6 +4,7 @@
   "placeholder": "Collez ou saisissez votre texte ici...",
   "copy": "Copier dans le presse-papiers",
   "clear": "Effacer",
+  "cancel": "Annuler",
   "manageStyles": "Gérer les styles",
   "autoOn": "Correction automatique activée",
   "autoOff": "Correction automatique désactivée",
@@ -91,6 +92,8 @@
   "styles.importOverwrite": "{count} style{plural} existant{plural} sera écrasé",
   "styles.importButton": "Importer",
   "styles.noStyles": "Le fichier ne contient aucun style.",
+  "styles.reorder": "Réorganiser",
+  "styles.reorderDone": "Terminé",
 
   "form.addTitle": "Ajouter un style",
   "form.editTitle": "Modifier le style",

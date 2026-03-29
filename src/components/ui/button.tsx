@@ -1,3 +1,11 @@
+/**
+ * Button component with variant and size options.
+ *
+ * A flexible button component supporting multiple variants (default, secondary, outline, ghost, destructive)
+ * and sizes (default, sm, lg, icon), with full accessibility support and Radix UI composition.
+ *
+ * @module components/ui/button
+ */
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -28,12 +36,33 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Props for the Button component.
+ *
+ * @interface ButtonProps
+ * @extends {React.ButtonHTMLAttributes<HTMLButtonElement>}
+ * @extends {VariantProps<typeof buttonVariants>}
+ * @property {boolean} [asChild] - If true, renders as a Slot component for composition
+ */
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }
 
+/**
+ * A versatile button component with multiple variants and sizes.
+ *
+ * @component
+ * @param {ButtonProps} props - The button props
+ * @param {React.Ref<HTMLButtonElement>} ref - The button ref
+ * @returns {React.ReactElement} The rendered button element
+ *
+ * @example
+ * <Button variant="default">Click me</Button>
+ * <Button variant="outline" size="sm">Small button</Button>
+ * <Button asChild><a href="/test">Link button</a></Button>
+ */
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"

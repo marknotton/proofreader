@@ -4,6 +4,7 @@
   "placeholder": "Text hier einfügen oder eingeben...",
   "copy": "In die Zwischenablage kopieren",
   "clear": "Leeren",
+  "cancel": "Abbrechen",
   "manageStyles": "Stile verwalten",
   "autoOn": "Autokorrektur aktiv",
   "autoOff": "Autokorrektur inaktiv",
@@ -91,6 +92,8 @@
   "styles.importOverwrite": "{count} vorhandener Stil{plural} wird überschrieben",
   "styles.importButton": "Importieren",
   "styles.noStyles": "Die Datei enthielt keine Stile.",
+  "styles.reorder": "Neu anordnen",
+  "styles.reorderDone": "Fertig",
 
   "form.addTitle": "Stil hinzufügen",
   "form.editTitle": "Stil bearbeiten",

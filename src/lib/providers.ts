@@ -1,7 +1,13 @@
 declare const __BUILD_PERIOD__: string
 
+/**
+ * Identifier for a supported AI provider.
+ */
 export type ProviderId = "gemini" | "openai" | "claude" | "grok"
 
+/**
+ * Configuration and metadata for a provider.
+ */
 export interface ProviderConfig {
   id: ProviderId
   name: string
@@ -36,9 +42,14 @@ export interface ProviderConfig {
   apiBase: string
 }
 
-/** Injected at build time by Vite — e.g. "early 2026" */
+/**
+ * Build period injected at build time by Vite (e.g. "early 2026").
+ */
 export const BUILD_PERIOD: string = typeof __BUILD_PERIOD__ !== "undefined" ? __BUILD_PERIOD__ : "early 2026"
 
+/**
+ * Configuration for all supported providers.
+ */
 export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
   gemini: {
     id: "gemini",
@@ -116,19 +127,47 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
   },
 }
 
+/**
+ * All supported provider IDs.
+ */
 export const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[]
 
-/** localStorage key pattern for per-provider API keys */
+/**
+ * Default thinking/reasoning values for each provider.
+ * Gemini: budget in tokens (0-8192)
+ * OpenAI/Claude: effort index (0/1/2)
+ * Grok: unused (0)
+ */
+export const DEFAULT_THINKING_BY_PROVIDER: Record<ProviderId, number> = {
+  gemini: 1024,
+  openai: 1,
+  claude: 1,
+  grok: 0,
+}
+
+/**
+ * Generate the localStorage key for a provider's API key.
+ * @param id - The provider ID
+ * @returns localStorage key string
+ */
 export function providerKeyStorageKey(id: ProviderId): string {
   return `proofreader_apikey_${id}`
 }
 
-/** Get the stored API key for a provider */
+/**
+ * Get the stored API key for a provider from localStorage.
+ * @param id - The provider ID
+ * @returns The stored API key, or empty string if not found
+ */
 export function getProviderKey(id: ProviderId): string {
   return localStorage.getItem(providerKeyStorageKey(id)) || ""
 }
 
-/** Save an API key for a provider */
+/**
+ * Save an API key for a provider to localStorage.
+ * @param id - The provider ID
+ * @param key - The API key to save (will be trimmed)
+ */
 export function setProviderKey(id: ProviderId, key: string): void {
   if (key.trim()) {
     localStorage.setItem(providerKeyStorageKey(id), key.trim())
@@ -137,13 +176,19 @@ export function setProviderKey(id: ProviderId, key: string): void {
   }
 }
 
-/** Get the stored active provider ID */
+/**
+ * Get the active provider ID from localStorage.
+ * @returns The stored provider ID, or "gemini" if none is stored or invalid
+ */
 export function getActiveProvider(): ProviderId {
   const stored = localStorage.getItem("proofreader_provider") as ProviderId | null
   return stored && PROVIDERS[stored] ? stored : "gemini"
 }
 
-/** Save the active provider ID */
+/**
+ * Save the active provider ID to localStorage.
+ * @param id - The provider ID to set as active
+ */
 export function setActiveProvider(id: ProviderId): void {
   localStorage.setItem("proofreader_provider", id)
 }

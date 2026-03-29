@@ -1,5 +1,8 @@
-import { type ProviderId, PROVIDERS } from "./providers"
+import { type ProviderId, PROVIDERS, DEFAULT_THINKING_BY_PROVIDER } from "./providers"
 
+/**
+ * A proofreading style configuration with prompt and formatting options.
+ */
 export interface ProofreadStyle {
   name: string
   prompt: string
@@ -15,17 +18,17 @@ export interface ProofreadStyle {
   markdown?: boolean
 }
 
+/**
+ * Default thinking value in tokens (used as fallback for Gemini).
+ */
 export const DEFAULT_THINKING = 1024
 
-/** Default per-provider thinking values */
-export const DEFAULT_THINKING_BY_PROVIDER: Record<ProviderId, number> = {
-  gemini: 1024,
-  openai: 1,
-  claude: 1,
-  grok: 0,
-}
-
-/** Get the thinking value for a specific provider from a style */
+/**
+ * Get the thinking value for a specific provider from a style.
+ * @param style - The proofreading style
+ * @param provider - The provider ID
+ * @returns The thinking value appropriate for the provider
+ */
 export function getStyleThinking(style: ProofreadStyle, provider: ProviderId): number {
   // Prefer per-provider value
   if (style.thinkingByProvider?.[provider] !== undefined) {
@@ -76,6 +79,8 @@ const STYLES_STORAGE_KEY = "proofreader_styles"
 /**
  * Migrate a style from legacy `thinking` (single number) to `thinkingByProvider`.
  * Only runs if the style doesn't already have thinkingByProvider set.
+ * @param style - The style to migrate
+ * @returns The migrated style with thinkingByProvider populated
  */
 function migrateStyle(style: ProofreadStyle): ProofreadStyle {
   if (style.thinkingByProvider) return style
@@ -91,7 +96,10 @@ function migrateStyle(style: ProofreadStyle): ProofreadStyle {
   }
 }
 
-/** Load styles from localStorage, falling back to defaults on first run */
+/**
+ * Load styles from localStorage, falling back to defaults on first run.
+ * @returns Array of proofreading styles, with legacy styles migrated
+ */
 export function loadStyles(): ProofreadStyle[] {
   try {
     const raw = localStorage.getItem(STYLES_STORAGE_KEY)
@@ -107,19 +115,32 @@ export function loadStyles(): ProofreadStyle[] {
   return [...DEFAULT_STYLES]
 }
 
-/** Persist styles to localStorage. Enforces at least one style. */
+/**
+ * Persist styles to localStorage. Enforces at least one style.
+ * @param styles - The styles to save
+ * @returns The saved styles (ensures at least one style exists)
+ */
 export function saveStyles(styles: ProofreadStyle[]): ProofreadStyle[] {
   const safe = styles.length > 0 ? styles : [{ ...FALLBACK_STYLE }]
   localStorage.setItem(STYLES_STORAGE_KEY, JSON.stringify(safe))
   return safe
 }
 
-/** Export styles as a JSON string for download */
+/**
+ * Export styles as a JSON string for download.
+ * @param styles - The styles to export
+ * @returns JSON string representation of the styles
+ */
 export function exportStylesJSON(styles: ProofreadStyle[]): string {
   return JSON.stringify(styles, null, 2)
 }
 
-/** Parse an imported JSON string into styles. Throws on invalid data. */
+/**
+ * Parse an imported JSON string into styles. Throws on invalid data.
+ * @param json - JSON string containing an array of styles
+ * @returns Parsed styles with legacy migration applied
+ * @throws Error if JSON is invalid or doesn't contain valid styles
+ */
 export function parseImportedStyles(json: string): ProofreadStyle[] {
   const parsed = JSON.parse(json)
   if (!Array.isArray(parsed)) throw new Error("Expected an array of styles")
@@ -136,8 +157,10 @@ export function parseImportedStyles(json: string): ProofreadStyle[] {
 
 /**
  * Merge imported styles into existing ones.
- * - Styles with a matching name get overwritten
- * - New styles get appended
+ * Styles with a matching name get overwritten, new styles get appended.
+ * @param existing - The existing styles
+ * @param incoming - The styles being imported
+ * @returns Merged styles array
  */
 export function mergeStyles(
   existing: ProofreadStyle[],
