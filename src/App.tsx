@@ -24,9 +24,18 @@ import {
 } from "./lib/providers"
 import { proofread } from "./lib/proofread"
 import { DEMO_ENABLED, getDemoUsed, getDemoLimit, hasDemoRemaining, demoProofread } from "./lib/demo"
+import {
+  type HistoryItem,
+  loadHistory,
+  addHistoryItem,
+  deleteHistoryItem,
+  clearHistory,
+  isHistoryEnabled,
+  setHistoryEnabled,
+} from "./lib/history"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2 } from "lucide-react"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2, History, ChevronRight } from "lucide-react"
 import { useI18n } from "./context/I18nContext"
 import { LOCALE_IDS, LOCALE_NAMES, type Locale } from "./lib/i18n"
 
@@ -53,7 +62,7 @@ function getChromeAPI(): any | null {
   return c?.storage ? c : null
 }
 
-type SettingsView = "closed" | "settings" | "styles" | "provider"
+type SettingsView = "closed" | "settings" | "styles" | "provider" | "history" | "history-detail"
 
 export default function App() {
   const { t, locale, changeLocale } = useI18n()
@@ -82,6 +91,12 @@ export default function App() {
   const [celebrateEnabled, setCelebrateEnabled] = useState(() => localStorage.getItem(CELEBRATE_KEY) !== "false")
   const [miniConfetti, setMiniConfetti] = useState(false)
   const [demoUsed, setDemoUsed] = useState(() => getDemoUsed())
+
+  // ── History state ──
+  const [historyEnabled, setHistoryEnabledState] = useState(() => isHistoryEnabled())
+  const [history, setHistory] = useState<HistoryItem[]>(() => loadHistory())
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   // ── Auto-proofread state ──
   const [autoShow, setAutoShow] = useState(() => localStorage.getItem(AUTO_SHOW_KEY) !== "false") // visible by default
@@ -157,12 +172,12 @@ export default function App() {
     try {
       let result = ""
 
-      // Append spelling locale instruction if set
+      // Prepend spelling locale instruction so it takes priority over the style prompt
       const localeInstruction = style.spellingLocale
         ? SPELLING_LOCALE_PROMPTS[style.spellingLocale]
         : ""
       const effectivePrompt = localeInstruction
-        ? `${style.prompt}\n\n${localeInstruction}`
+        ? `${localeInstruction}\n\n${style.prompt}`
         : style.prompt
 
       if (isDemo) {
@@ -197,6 +212,19 @@ export default function App() {
         .replace(/^\s*\[TEXT\s*START\]\s*/i, "")
         .replace(/\s*\[TEXT\s*END\]\s*$/i, "")
       setOutput(result)
+
+      // Save to history
+      if (historyEnabled && result.trim()) {
+        const updated = addHistoryItem({
+          input: text.trim(),
+          output: result,
+          styleName: style.name,
+          provider,
+          thinking: thinkingOverride ?? getStyleThinking(style, provider),
+          spellingLocale: style.spellingLocale,
+        })
+        setHistory(updated)
+      }
 
       // Perfect result — no changes needed
       const perfectMessages = [
@@ -615,6 +643,171 @@ export default function App() {
     )
   }
 
+  // ── History detail view ──
+  if (settingsView === "history-detail" && selectedHistoryItem) {
+    const item = selectedHistoryItem
+    const itemDate = new Date(item.timestamp)
+    const dateStr = itemDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    const timeStr = itemDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+
+    return (
+      <div className="flex flex-col h-screen bg-background text-foreground">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-input shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setSettingsView("history")} className="shrink-0">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="font-semibold flex-1">{dateStr} · {timeStr}</h2>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
+          {/* Meta row */}
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1 rounded-full border border-input px-2.5 py-0.5">
+              <SlidersHorizontal className="h-3 w-3" />{item.styleName}
+            </span>
+          </div>
+
+          {/* Original */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("history.input")}</p>
+            <div className="rounded-md border border-input bg-muted/30 p-3 text-sm whitespace-pre-wrap leading-relaxed">{item.input}</div>
+          </div>
+
+          {/* Result */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("history.output")}</p>
+            <div className="rounded-md border border-input bg-muted/30 p-3 text-sm whitespace-pre-wrap leading-relaxed">{item.output}</div>
+          </div>
+        </div>
+
+        {/* Reuse button */}
+        <div className="p-4 border-t border-input shrink-0">
+          <Button
+            className="w-full"
+            onClick={() => {
+              setInput(item.input)
+              setOutput(item.output)
+              const matchedStyle = styles.find((s) => s.name === item.styleName)
+              if (matchedStyle) {
+                setActiveStyle(matchedStyle.name)
+                setThinkingOverride(item.thinking)
+              }
+              setSettingsView("closed")
+            }}
+          >
+            {t("history.reuse")}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── History list view ──
+  if (settingsView === "history") {
+    const formatItemDate = (ts: number) => {
+      const d = new Date(ts)
+      return d.toLocaleDateString(undefined, { day: "numeric", month: "short" }) + " · " +
+        d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    }
+
+    return (
+      <div className="flex flex-col h-screen bg-background text-foreground">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-input shrink-0">
+          <h2 className="font-semibold">{t("history.title")}</h2>
+          <div className="flex items-center gap-1">
+            {history.length > 0 && !showClearConfirm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-destructive"
+                onClick={() => setShowClearConfirm(true)}
+              >
+                {t("history.clear")}
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")} aria-label="Close">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Clear confirmation */}
+        {showClearConfirm && (
+          <div className="mx-4 mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex flex-col gap-2 shrink-0">
+            <p className="text-sm font-medium">{t("history.clearConfirm")}</p>
+            <p className="text-xs text-muted-foreground">{t("history.clearConfirmDesc", { count: String(history.length) })}</p>
+            <div className="flex gap-2 mt-1">
+              <Button
+                size="sm"
+                variant="destructive"
+                className="flex-1"
+                onClick={() => {
+                  clearHistory()
+                  setHistory([])
+                  setShowClearConfirm(false)
+                }}
+              >
+                {t("history.clear")}
+              </Button>
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowClearConfirm(false)}>
+                {t("cancel")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* List */}
+        <div className="flex-1 overflow-auto">
+          {history.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-6">
+              <History className="h-8 w-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">{t("history.empty")}</p>
+            </div>
+          ) : (
+            <ul className="flex flex-col divide-y divide-input">
+              {history.map((item) => (
+                <li key={item.id} className="flex items-center gap-2 px-4 py-3 hover:bg-accent/40 transition-colors group">
+                  <button
+                    className="flex-1 min-w-0 text-left"
+                    onClick={() => {
+                      setSelectedHistoryItem(item)
+                      setSettingsView("history-detail")
+                    }}
+                  >
+                    <p className="text-sm truncate">{item.output}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatItemDate(item.timestamp)} · {item.styleName}</p>
+                  </button>
+                  <button
+                    className="shrink-0 p-1.5 rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                    title={t("history.delete")}
+                    aria-label={t("history.delete")}
+                    onClick={() => {
+                      const updated = deleteHistoryItem(item.id)
+                      setHistory(updated)
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    className="shrink-0 p-1.5 rounded text-muted-foreground/40 hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+                    onClick={() => {
+                      setSelectedHistoryItem(item)
+                      setSettingsView("history-detail")
+                    }}
+                    aria-label={t("history.view")}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   // ── Style manager view ──
   if (settingsView === "styles") {
     return (
@@ -833,6 +1026,15 @@ export default function App() {
               <Switch checked={celebrateEnabled} onCheckedChange={(v) => { setCelebrateEnabled(v); localStorage.setItem(CELEBRATE_KEY, String(v)) }} />
             </label>
 
+            {/* History */}
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div>
+                <p className="text-sm">{t("history.enabled")}</p>
+                <p className="text-xs text-muted-foreground">{t("history.enabledDesc")}</p>
+              </div>
+              <Switch checked={historyEnabled} onCheckedChange={(v) => { setHistoryEnabledState(v); setHistoryEnabled(v) }} />
+            </label>
+
             {/* Auto-proofread */}
             <label className="flex items-center justify-between gap-3 cursor-pointer">
               <div>
@@ -1013,8 +1215,8 @@ export default function App() {
           )
         })}
         <div className="ml-auto flex gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setSettingsView("styles")} title={t("manageStyles")}>
-            <SlidersHorizontal className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={() => setSettingsView("history")} title={t("history.title")} aria-label={t("history.title")}>
+            <History className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" onClick={() => setSettingsView("settings")} title={t("settings.title")} aria-label={t("settings.title")}>
             <Settings className="h-4 w-4" />

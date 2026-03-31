@@ -134,5 +134,19 @@
   "demo.limitReached": "Solicitações de exemplo esgotadas",
   "demo.limitReachedDesc": "Adicione sua própria chave API para continuar usando o Proofreader — é completamente gratuito. Você só precisa de uma chave de qualquer provedor compatível.",
   "demo.connectProvider": "Adicione uma chave API para começar",
-  "demo.connectProviderDesc": "O Proofreader é gratuito e de código aberto. Basta adicionar uma chave API do Gemini, OpenAI, Anthropic ou xAI. Sua chave fica no seu dispositivo — nada é enviado para outro lugar."
+  "demo.connectProviderDesc": "O Proofreader é gratuito e de código aberto. Basta adicionar uma chave API do Gemini, OpenAI, Anthropic ou xAI. Sua chave fica no seu dispositivo — nada é enviado para outro lugar.",
+
+  "history.title": "Histórico",
+  "history.empty": "Ainda sem histórico. As suas sessões de correção aparecerão aqui.",
+  "history.clear": "Limpar histórico",
+  "history.clearConfirm": "Limpar todo o histórico?",
+  "history.clearConfirmDesc": "Isto eliminará permanentemente todos os {count} itens. Esta ação não pode ser desfeita.",
+  "history.delete": "Eliminar item",
+  "history.reuse": "Reutilizar",
+  "history.input": "Original",
+  "history.output": "Resultado",
+  "history.style": "Estilo",
+  "history.thinking": "Raciocínio",
+  "history.enabled": "Guardar histórico",
+  "history.enabledDesc": "Armazenar um registo das suas sessões de correção localmente"
 }

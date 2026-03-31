@@ -134,5 +134,19 @@
   "demo.limitReached": "Sample requests used up",
   "demo.limitReachedDesc": "Add your own API key to keep using Proofreader — it's completely free. You just need a key from any supported provider.",
   "demo.connectProvider": "Add an API key to get started",
-  "demo.connectProviderDesc": "Proofreader is free and open source. Just add an API key from Gemini, OpenAI, Anthropic, or xAI. Your key stays on your machine — nothing is sent anywhere else."
+  "demo.connectProviderDesc": "Proofreader is free and open source. Just add an API key from Gemini, OpenAI, Anthropic, or xAI. Your key stays on your machine — nothing is sent anywhere else.",
+
+  "history.title": "History",
+  "history.empty": "No history yet. Your proofreading sessions will appear here.",
+  "history.clear": "Clear history",
+  "history.clearConfirm": "Clear all history?",
+  "history.clearConfirmDesc": "This will permanently delete all {count} items. This can't be undone.",
+  "history.delete": "Delete item",
+  "history.reuse": "Reuse",
+  "history.input": "Original",
+  "history.output": "Result",
+  "history.style": "Style",
+  "history.thinking": "Thinking",
+  "history.enabled": "Save history",
+  "history.enabledDesc": "Store a log of your proofreading sessions locally"
 }

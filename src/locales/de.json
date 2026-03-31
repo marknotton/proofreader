@@ -134,5 +134,19 @@
   "demo.limitReached": "Beispielanfragen aufgebraucht",
   "demo.limitReachedDesc": "Füge deinen eigenen API-Schlüssel hinzu, um Proofreader weiter zu nutzen — es ist komplett kostenlos. Du brauchst nur einen Schlüssel von einem unterstützten Anbieter.",
   "demo.connectProvider": "API-Schlüssel hinzufügen zum Starten",
-  "demo.connectProviderDesc": "Proofreader ist kostenlos und Open Source. Füge einfach einen API-Schlüssel von Gemini, OpenAI, Anthropic oder xAI hinzu. Dein Schlüssel bleibt auf deinem Gerät — nichts wird anderswohin gesendet."
+  "demo.connectProviderDesc": "Proofreader ist kostenlos und Open Source. Füge einfach einen API-Schlüssel von Gemini, OpenAI, Anthropic oder xAI hinzu. Dein Schlüssel bleibt auf deinem Gerät — nichts wird anderswohin gesendet.",
+
+  "history.title": "Verlauf",
+  "history.empty": "Noch kein Verlauf. Deine Korrektursitzungen erscheinen hier.",
+  "history.clear": "Verlauf löschen",
+  "history.clearConfirm": "Gesamten Verlauf löschen?",
+  "history.clearConfirmDesc": "Dadurch werden alle {count} Einträge dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
+  "history.delete": "Eintrag löschen",
+  "history.reuse": "Wiederverwenden",
+  "history.input": "Original",
+  "history.output": "Ergebnis",
+  "history.style": "Stil",
+  "history.thinking": "Denktiefe",
+  "history.enabled": "Verlauf speichern",
+  "history.enabledDesc": "Ein Protokoll deiner Korrektursitzungen lokal speichern"
 }

@@ -466,7 +466,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
     initial.thinkingByProvider ?? { ...DEFAULT_THINKING_BY_PROVIDER }
   )
   const [markdown, setMarkdown] = useState(initial.markdown ?? false)
-  const [spellingLocale, setSpellingLocale] = useState<SpellingLocale>(initial.spellingLocale ?? "en-GB")
+  const [spellingLocale, setSpellingLocale] = useState<SpellingLocale>(initial.spellingLocale ?? "none")
   const [showThinking, setShowThinking] = useState(false)
   const [showIcons, setShowIcons] = useState(false)
   const [showColors, setShowColors] = useState(false)

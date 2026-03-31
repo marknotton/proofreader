@@ -134,5 +134,19 @@
   "demo.limitReached": "Voorbeeldverzoeken opgebruikt",
   "demo.limitReachedDesc": "Voeg je eigen API-sleutel toe om Proofreader te blijven gebruiken — het is volledig gratis. Je hebt alleen een sleutel nodig van een ondersteunde provider.",
   "demo.connectProvider": "Voeg een API-sleutel toe om te beginnen",
-  "demo.connectProviderDesc": "Proofreader is gratis en open source. Voeg gewoon een API-sleutel toe van Gemini, OpenAI, Anthropic of xAI. Je sleutel blijft op je apparaat — er wordt niets elders naartoe gestuurd."
+  "demo.connectProviderDesc": "Proofreader is gratis en open source. Voeg gewoon een API-sleutel toe van Gemini, OpenAI, Anthropic of xAI. Je sleutel blijft op je apparaat — er wordt niets elders naartoe gestuurd.",
+
+  "history.title": "Geschiedenis",
+  "history.empty": "Nog geen geschiedenis. Je correctiesessies verschijnen hier.",
+  "history.clear": "Geschiedenis wissen",
+  "history.clearConfirm": "Volledige geschiedenis wissen?",
+  "history.clearConfirmDesc": "Dit verwijdert alle {count} items permanent. Dit kan niet ongedaan worden gemaakt.",
+  "history.delete": "Item verwijderen",
+  "history.reuse": "Hergebruiken",
+  "history.input": "Origineel",
+  "history.output": "Resultaat",
+  "history.style": "Stijl",
+  "history.thinking": "Denkniveau",
+  "history.enabled": "Geschiedenis opslaan",
+  "history.enabledDesc": "Sla een logboek van je correctiesessies lokaal op"
 }

@@ -5,7 +5,7 @@ import { type ProviderId, PROVIDERS, DEFAULT_THINKING_BY_PROVIDER } from "./prov
  * Tells the AI which regional spelling conventions to follow.
  */
 export const SPELLING_LOCALES = [
-  { key: "none",  label: "No preference" },
+  { key: "none",  label: "None (don't enforce spelling)" },
   { key: "en-GB", label: "British English" },
   { key: "en-US", label: "American English" },
   { key: "en-AU", label: "Australian English" },
@@ -17,16 +17,39 @@ export const SPELLING_LOCALES = [
 
 export type SpellingLocale = (typeof SPELLING_LOCALES)[number]["key"]
 
-/** Instruction appended to the prompt for each spelling locale. */
+/** Instruction prepended to the prompt for each spelling locale. */
 export const SPELLING_LOCALE_PROMPTS: Record<SpellingLocale, string> = {
   "none":  "",
-  "en-GB": "Use British English spelling conventions (e.g. colour, realise, centre, programme, whilst).",
-  "en-US": "Use American English spelling conventions (e.g. color, realize, center, program, while).",
-  "en-AU": "Use Australian English spelling conventions (e.g. colour, realise, centre, programme). Follow Australian style for -ise/-ize and -our/-or words.",
-  "en-CA": "Use Canadian English spelling conventions, which generally follow British spellings for -our and -re words but American spellings for -ize verbs (e.g. colour, centre, realize).",
-  "en-NZ": "Use New Zealand English spelling conventions, which closely follow British English (e.g. colour, realise, centre, programme).",
-  "en-IE": "Use Irish English spelling conventions, which follow British English (e.g. colour, realise, centre, programme).",
-  "en-ZA": "Use South African English spelling conventions, which follow British English (e.g. colour, realise, centre, programme).",
+  "en-GB": `MANDATORY LANGUAGE RULE — apply this before everything else, without exception:
+Convert ALL spelling and vocabulary to British English in the output. Do not preserve any American or non-British forms — actively replace them even if they appear correct in the input.
+Spelling: colour, flavour, honour, labour, neighbour, behaviour | realise, recognise, organise, analyse, authorise, apologise | centre, metre, theatre, litre | programme, catalogue, dialogue | travelled, cancelled, modelled | defence, offence, licence (noun), practise (verb) | cheque, tyre, mould, plough, kerb, grey.
+Vocabulary: mum (not mom), autumn (not fall), flat (not apartment), holiday (not vacation), post (not mail), shop (not store), biscuit (not cookie), crisps (not chips), chips (not fries), whilst (not while), amongst (not among), different to (not different than), at the weekend (not on the weekend).`,
+
+  "en-US": `MANDATORY LANGUAGE RULE — apply this before everything else, without exception:
+Convert ALL spelling and vocabulary to American English in the output. Do not preserve any British or non-American forms — actively replace them even if they appear correct in the input.
+Spelling: color, flavor, honor, labor, neighbor, behavior | realize, recognize, organize, analyze, authorize, apologize | center, meter, theater, liter | program, catalog, dialog | traveled, canceled, modeled | defense, offense, license (noun), practice (verb) | check, tire, mold, plow, curb, gray.
+Vocabulary: mom (not mum), fall (not autumn), apartment (not flat), vacation (not holiday), mail (not post), store (not shop), cookie (not biscuit), chips (not crisps), fries (not chips), while (not whilst), among (not amongst), different from (not different to), on the weekend (not at the weekend).`,
+
+  "en-AU": `MANDATORY LANGUAGE RULE — apply this before everything else, without exception:
+Convert ALL spelling and vocabulary to Australian English in the output. Do not preserve any non-Australian forms — actively replace them even if they appear correct in the input.
+Spelling follows British conventions: colour, flavour, realise, organise, centre, programme, travelled, defence, grey. Vocabulary: mum (not mom), autumn (not fall), holiday (not vacation), post (not mail), whilst (not while).`,
+
+  "en-CA": `MANDATORY LANGUAGE RULE — apply this before everything else, without exception:
+Convert ALL spelling and vocabulary to Canadian English in the output. Do not preserve non-Canadian forms — actively replace them.
+Canadian spelling: British -our words (colour, behaviour, favour) and -re words (centre, theatre) but American -ize verbs (realize, organize, recognize). Also: travelled, defence, cheque, grey, programme.
+Vocabulary: mom (Canadian usage), fall or autumn (both acceptable), apartment, vacation.`,
+
+  "en-NZ": `MANDATORY LANGUAGE RULE — apply this before everything else, without exception:
+Convert ALL spelling and vocabulary to New Zealand English in the output. Do not preserve any non-NZ forms — actively replace them.
+Follows British conventions: colour, realise, centre, programme, travelled, defence, grey, whilst, mum (not mom), autumn (not fall), holiday (not vacation).`,
+
+  "en-IE": `MANDATORY LANGUAGE RULE — apply this before everything else, without exception:
+Convert ALL spelling and vocabulary to Irish English in the output. Do not preserve any non-Irish forms — actively replace them.
+Follows British conventions: colour, realise, centre, programme, travelled, defence, grey, whilst, mum (not mom), autumn (not fall), holiday (not vacation).`,
+
+  "en-ZA": `MANDATORY LANGUAGE RULE — apply this before everything else, without exception:
+Convert ALL spelling and vocabulary to South African English in the output. Do not preserve any non-South African forms — actively replace them.
+Follows British conventions: colour, realise, centre, programme, travelled, defence, grey, whilst, mum (not mom), autumn (not fall), holiday (not vacation).`,
 }
 
 /**
