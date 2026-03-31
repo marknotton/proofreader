@@ -108,6 +108,8 @@
   "form.promptPlaceholder": "Anweisungen, wie die KI den Text verarbeiten soll...",
   "form.thinking": "Denkbudgets",
   "form.thinkingDesc": "Steuert, wie viel die KI vor der Antwort nachdenkt. Höhere Werte können die Qualität verbessern, dauern aber länger. Pro Anbieter festlegen, damit es unabhängig vom verwendeten Anbieter bereit ist.",
+  "form.spellingLocale": "Rechtschreibvariante",
+  "form.spellingLocaleDesc": "Fügt eine Rechtschreibkonvention zu deinem Prompt hinzu. Nützlich für regionale Unterschiede wie colour vs color.",
   "form.markdown": "Intelligentes Markdown",
   "form.markdownDesc": "Wenn die Antwort Codeblöcke oder anderes Markdown enthält, wird die Ausgabe mit Formatierung und blockweisen Kopierschaltflächen gerendert.",
   "form.save": "Änderungen speichern",

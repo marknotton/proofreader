@@ -108,6 +108,8 @@
   "form.promptPlaceholder": "Instructies voor hoe de AI de tekst moet verwerken...",
   "form.thinking": "Denkbudgetten",
   "form.thinkingDesc": "Bepaalt hoeveel de AI nadenkt voor het antwoord. Hogere waarden kunnen de kwaliteit verbeteren maar duren langer. Stel in per aanbieder zodat het klaar is ongeacht welke je gebruikt.",
+  "form.spellingLocale": "Spellingvariant",
+  "form.spellingLocaleDesc": "Voegt een spellingconventie-instructie toe aan je prompt. Handig voor regionale verschillen zoals colour vs color.",
   "form.markdown": "Slimme Markdown",
   "form.markdownDesc": "Als het antwoord codeblokken of andere markdown bevat, wordt de uitvoer gerenderd met opmaak en kopieerknoppen per blok.",
   "form.save": "Wijzigingen opslaan",

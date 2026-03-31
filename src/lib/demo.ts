@@ -1,7 +1,13 @@
 /**
  * Demo mode — allows up to 5 free proofreading requests via a shared backend.
  * Uses Gemini through a Firebase Functions proxy so the API key stays server-side.
+ *
+ * Set DEMO_ENABLED to false to disable demo mode entirely before deploying.
  */
+
+// ── Feature flag ──────────────────────────────────────────────────────────────
+export const DEMO_ENABLED = true
+// ─────────────────────────────────────────────────────────────────────────────
 
 const INSTALL_ID_KEY = "proofreader_install_id"
 const DEMO_USED_KEY = "proofreader_demo_used"
@@ -77,7 +83,9 @@ export async function demoProofread(
     if (response.status === 429 && data.used !== undefined) {
       localStorage.setItem(DEMO_USED_KEY, String(data.used))
     }
-    throw new Error(data.message || data.error || `Demo request failed (${response.status})`)
+    const msg = data.message || data.error || `Demo request failed (${response.status})`
+    const detail = data.detail ? `\n\n${data.detail}` : ""
+    throw new Error(`${msg}${detail}`)
   }
 
   // Cache the usage count locally

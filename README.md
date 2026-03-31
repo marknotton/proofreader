@@ -16,9 +16,9 @@
 ---
 
 <p align="center">
-  <img src="src/assets/main.webp" alt="Main view" width="260" style="border-radius:12px; margin:0 8px;">
-  <img src="src/assets/settings.webp" alt="Settings" width="260" style="border-radius:12px; margin:0 8px;">
-  <img src="src/assets/styles.webp" alt="Styles" width="260" style="border-radius:12px; margin:0 8px;">
+  <img src="src/assets/screenshot-main.webp" alt="Main view" width="260" style="border-radius:12px; margin:0 8px;">
+  <img src="src/assets/screenshot-settings.webp" alt="Settings" width="260" style="border-radius:12px; margin:0 8px;">
+  <img src="src/assets/screenshot-styles.webp" alt="Styles" width="260" style="border-radius:12px; margin:0 8px;">
 </p>
 
 ---

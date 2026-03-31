@@ -1,6 +1,35 @@
 import { type ProviderId, PROVIDERS, DEFAULT_THINKING_BY_PROVIDER } from "./providers"
 
 /**
+ * Spelling locale variant appended to the style prompt.
+ * Tells the AI which regional spelling conventions to follow.
+ */
+export const SPELLING_LOCALES = [
+  { key: "none",  label: "No preference" },
+  { key: "en-GB", label: "British English" },
+  { key: "en-US", label: "American English" },
+  { key: "en-AU", label: "Australian English" },
+  { key: "en-CA", label: "Canadian English" },
+  { key: "en-NZ", label: "New Zealand English" },
+  { key: "en-IE", label: "Irish English" },
+  { key: "en-ZA", label: "South African English" },
+] as const
+
+export type SpellingLocale = (typeof SPELLING_LOCALES)[number]["key"]
+
+/** Instruction appended to the prompt for each spelling locale. */
+export const SPELLING_LOCALE_PROMPTS: Record<SpellingLocale, string> = {
+  "none":  "",
+  "en-GB": "Use British English spelling conventions (e.g. colour, realise, centre, programme, whilst).",
+  "en-US": "Use American English spelling conventions (e.g. color, realize, center, program, while).",
+  "en-AU": "Use Australian English spelling conventions (e.g. colour, realise, centre, programme). Follow Australian style for -ise/-ize and -our/-or words.",
+  "en-CA": "Use Canadian English spelling conventions, which generally follow British spellings for -our and -re words but American spellings for -ize verbs (e.g. colour, centre, realize).",
+  "en-NZ": "Use New Zealand English spelling conventions, which closely follow British English (e.g. colour, realise, centre, programme).",
+  "en-IE": "Use Irish English spelling conventions, which follow British English (e.g. colour, realise, centre, programme).",
+  "en-ZA": "Use South African English spelling conventions, which follow British English (e.g. colour, realise, centre, programme).",
+}
+
+/**
  * A proofreading style configuration with prompt and formatting options.
  */
 export interface ProofreadStyle {
@@ -16,6 +45,8 @@ export interface ProofreadStyle {
   color?: string
   /** When true, detect and render markdown code blocks with copy buttons */
   markdown?: boolean
+  /** Regional spelling convention appended to the prompt */
+  spellingLocale?: SpellingLocale
 }
 
 /**

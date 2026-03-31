@@ -108,6 +108,8 @@
   "form.promptPlaceholder": "e.g. Fix grammar and spelling only — preserve the original tone and style.\n\nor: Rewrite in a professional tone suitable for a business email. Tighten any loose phrasing.",
   "form.thinking": "Thinking budgets",
   "form.thinkingDesc": "Controls how much each AI thinks before responding. Higher values may improve quality but take longer. Set per provider so it's ready regardless of which one you use.",
+  "form.spellingLocale": "Spelling variant",
+  "form.spellingLocaleDesc": "Appends a spelling convention instruction to your prompt. Useful for controlling colour vs color, realise vs realize, and similar regional differences.",
   "form.markdown": "Smart Markdown",
   "form.markdownDesc": "If the response contains code blocks or other markdown, the output will be rendered with formatting and per-block copy buttons.",
   "form.save": "Save Changes",

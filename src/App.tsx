@@ -10,6 +10,7 @@ import {
   getStyleThinking,
   loadStyles,
   saveStyles,
+  SPELLING_LOCALE_PROMPTS,
 } from "./lib/styles"
 import {
   type ProviderId,
@@ -22,7 +23,7 @@ import {
   setActiveProvider as persistProvider,
 } from "./lib/providers"
 import { proofread } from "./lib/proofread"
-import { getDemoUsed, getDemoLimit, hasDemoRemaining, demoProofread } from "./lib/demo"
+import { DEMO_ENABLED, getDemoUsed, getDemoLimit, hasDemoRemaining, demoProofread } from "./lib/demo"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
 import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2 } from "lucide-react"
@@ -131,8 +132,9 @@ export default function App() {
     opts?: { mode?: "proofread" | "replace"; tabId?: number; styleName?: string }
   ) => {
     const key = apiKey || getProviderKey(provider)
-    const isDemo = !key
+    const isDemo = DEMO_ENABLED && !key
     if (!text.trim()) return
+    if (!key && !isDemo) return   // no key and demo disabled — do nothing
     if (isDemo && !hasDemoRemaining()) return
 
     // If a styleName was passed (e.g. from context menu), use that — the React
@@ -155,12 +157,20 @@ export default function App() {
     try {
       let result = ""
 
+      // Append spelling locale instruction if set
+      const localeInstruction = style.spellingLocale
+        ? SPELLING_LOCALE_PROMPTS[style.spellingLocale]
+        : ""
+      const effectivePrompt = localeInstruction
+        ? `${style.prompt}\n\n${localeInstruction}`
+        : style.prompt
+
       if (isDemo) {
         // Demo mode — non-streaming single response via Firebase proxy
         // Force thinking to fastest to keep demo snappy (user can still
         // interact with the slider for UX purposes — we just override here)
         setThinkingOverride(0)
-        const data = await demoProofread(style.prompt, text.trim(), controller.signal)
+        const data = await demoProofread(effectivePrompt, text.trim(), controller.signal)
         result = data.result
         setOutput(result)
         setDemoUsed(data.used)
@@ -171,7 +181,7 @@ export default function App() {
         await proofread(
           provider,
           key,
-          style.prompt,
+          effectivePrompt,
           text.trim(),
           (chunk) => {
             result += chunk
@@ -229,10 +239,12 @@ export default function App() {
       if (err instanceof Error && err.name !== "AbortError") {
         // Demo errors are already human-readable — skip provider-specific sanitisation
         const isDemo = !key
-        setError(isDemo
-          ? { message: err.message, raw: err.message }
-          : sanitiseError(err.message, provider)
-        )
+        if (isDemo) {
+          const [message, ...rest] = err.message.split("\n\n")
+          setError({ message, raw: rest.length ? rest.join("\n\n") : err.message })
+        } else {
+          setError(sanitiseError(err.message, provider))
+        }
         setShowRawError(false)
       }
     } finally {
@@ -970,7 +982,7 @@ export default function App() {
 
   // ── Main view ──
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground">
+    <div className="relative flex flex-col h-screen bg-background text-foreground">
       {/* Mini confetti overlay */}
       {confettiPieces && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1016,7 +1028,7 @@ export default function App() {
           <div className="flex items-start gap-3">
             <Zap className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div className="text-sm">
-              {hasDemoRemaining() ? (
+              {DEMO_ENABLED && hasDemoRemaining() ? (
                 <>
                   <p className="font-medium mb-1">{t("demo.title", { limit: String(getDemoLimit()) })}</p>
                   <p className="text-muted-foreground text-xs leading-relaxed">
@@ -1060,7 +1072,7 @@ export default function App() {
       {renderThinkingSlider()}
 
       {/* Input */}
-      <div className={`flex-1 flex flex-col gap-3 px-4 pb-3 min-h-0 ${!apiKey && !hasDemoRemaining() ? "opacity-50 pointer-events-none" : ""}`}>
+      <div className={`flex-1 flex flex-col gap-3 px-4 pb-3 min-h-0 ${!apiKey && !(DEMO_ENABLED && hasDemoRemaining()) ? "opacity-50 pointer-events-none" : ""}`}>
         <div className="relative flex-1 min-h-[120px]">
           <Textarea
             value={input}
@@ -1076,11 +1088,6 @@ export default function App() {
             aria-label={t("placeholder")}
             className="h-full text-sm"
           />
-          {toast && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-foreground text-background text-xs px-3 py-1.5 rounded-md shadow-lg pointer-events-none animate-fade-in z-10">
-              {toast}
-            </div>
-          )}
         </div>
 
         <div className="flex gap-2">
@@ -1207,6 +1214,15 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-toast-up">
+          <div className="bg-[#FBBA00] text-primary-foreground text-sm font-medium px-4 py-2 rounded-lg shadow-xl whitespace-nowrap">
+            {toast}
+          </div>
+        </div>
+      )}
 
       {/* Subtle donation footer */}
       {!hideDonation && (

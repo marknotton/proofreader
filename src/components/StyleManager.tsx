@@ -13,6 +13,8 @@ import { Textarea } from "./ui/textarea"
 import { Switch } from "./ui/switch"
 import {
   type ProofreadStyle,
+  type SpellingLocale,
+  SPELLING_LOCALES,
   exportStylesJSON,
   parseImportedStyles,
   mergeStyles,
@@ -464,6 +466,7 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
     initial.thinkingByProvider ?? { ...DEFAULT_THINKING_BY_PROVIDER }
   )
   const [markdown, setMarkdown] = useState(initial.markdown ?? false)
+  const [spellingLocale, setSpellingLocale] = useState<SpellingLocale>(initial.spellingLocale ?? "en-GB")
   const [showThinking, setShowThinking] = useState(false)
   const [showIcons, setShowIcons] = useState(false)
   const [showColors, setShowColors] = useState(false)
@@ -494,8 +497,9 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
       icon,
       color,
       markdown,
+      spellingLocale,
     })
-  }, [name, prompt, thinkingByProvider, icon, color, markdown, existingNames, onSave])
+  }, [name, prompt, thinkingByProvider, icon, color, markdown, spellingLocale, existingNames, onSave])
 
   const geminiLabel = (v: number) =>
     v === 0 ? t("thinking.off") : v <= 1024 ? t("thinking.fast") : v <= 4096 ? t("thinking.balanced") : t("thinking.thorough")
@@ -604,6 +608,26 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Spelling locale */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t("form.spellingLocale")}
+          </label>
+          <p className="text-xs text-muted-foreground/70 leading-relaxed">{t("form.spellingLocaleDesc")}</p>
+          <div className="relative mt-0.5">
+            <select
+              value={spellingLocale}
+              onChange={(e) => setSpellingLocale(e.target.value as SpellingLocale)}
+              className="w-full appearance-none h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring pr-8"
+            >
+              {SPELLING_LOCALES.map((opt) => (
+                <option key={opt.key} value={opt.key}>{opt.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
           </div>
         </div>
 

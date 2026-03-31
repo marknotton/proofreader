@@ -108,6 +108,8 @@
   "form.promptPlaceholder": "Instruções sobre como a IA deve processar o texto...",
   "form.thinking": "Orçamentos de raciocínio",
   "form.thinkingDesc": "Controla quanto a IA pensa antes de responder. Valores mais altos podem melhorar a qualidade, mas demoram mais. Define por fornecedor para estar pronto independentemente do que usas.",
+  "form.spellingLocale": "Variante ortográfica",
+  "form.spellingLocaleDesc": "Adiciona uma instrução de convenção ortográfica ao seu prompt. Útil para diferenças regionais como colour vs color.",
   "form.markdown": "Markdown inteligente",
   "form.markdownDesc": "Se a resposta contiver blocos de código ou outro markdown, o resultado será renderizado com formatação e botões de cópia por bloco.",
   "form.save": "Guardar alterações",
