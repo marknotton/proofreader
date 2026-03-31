@@ -138,6 +138,8 @@
 
   "history.title": "Geschiedenis",
   "history.empty": "Nog geen geschiedenis. Je correctiesessies verschijnen hier.",
+  "history.search": "Zoek in geschiedenis…",
+  "history.noResults": "Geen resultaten voor je zoekopdracht.",
   "history.clear": "Geschiedenis wissen",
   "history.clearConfirm": "Volledige geschiedenis wissen?",
   "history.clearConfirmDesc": "Dit verwijdert alle {count} items permanent. Dit kan niet ongedaan worden gemaakt.",
@@ -148,5 +150,12 @@
   "history.style": "Stijl",
   "history.thinking": "Denkniveau",
   "history.enabled": "Geschiedenis opslaan",
-  "history.enabledDesc": "Sla een logboek van je correctiesessies lokaal op"
+  "history.enabledDesc": "Sla een logboek van je correctiesessies lokaal op",
+  "history.disableWillClear": "Je hebt {count} opgeslagen items. Het uitschakelen van geschiedenis zal ze permanent verwijderen.",
+  "history.disableAndClear": "Uitschakelen & wissen",
+  "history.justDisable": "Alleen uitschakelen",
+
+  "incognito.enable": "Incognitomodus — deze sessie wordt niet opgeslagen",
+  "incognito.disable": "Incognito uitschakelen",
+  "incognito.active": "Incognitomodus — deze sessie wordt niet in de geschiedenis opgeslagen"
 }

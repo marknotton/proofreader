@@ -138,6 +138,8 @@
 
   "history.title": "Cronologia",
   "history.empty": "Nessuna cronologia ancora. Le tue sessioni di correzione appariranno qui.",
+  "history.search": "Cerca nella cronologia…",
+  "history.noResults": "Nessun risultato corrisponde alla tua ricerca.",
   "history.clear": "Cancella cronologia",
   "history.clearConfirm": "Cancellare tutta la cronologia?",
   "history.clearConfirmDesc": "Questo eliminerà definitivamente tutti i {count} elementi. Non può essere annullato.",
@@ -148,5 +150,12 @@
   "history.style": "Stile",
   "history.thinking": "Riflessione",
   "history.enabled": "Salva cronologia",
-  "history.enabledDesc": "Memorizza un registro delle tue sessioni di correzione localmente"
+  "history.enabledDesc": "Memorizza un registro delle tue sessioni di correzione localmente",
+  "history.disableWillClear": "Hai {count} elementi salvati. Disabilitare la cronologia li eliminerà definitivamente.",
+  "history.disableAndClear": "Disabilita & cancella",
+  "history.justDisable": "Solo disabilita",
+
+  "incognito.enable": "Modalità in incognito — questa sessione non verrà salvata",
+  "incognito.disable": "Disattiva incognito",
+  "incognito.active": "Modalità in incognito — questa sessione non verrà salvata nella cronologia"
 }

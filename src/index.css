@@ -43,6 +43,27 @@ html[data-theme="dark"] {
   --color-ring: hsl(207 82% 66%);
 }
 
+/* Incognito mode — near-black regardless of user theme */
+html[data-theme="incognito"] {
+  --color-background: hsl(222 28% 5%);
+  --color-foreground: hsl(220 20% 90%);
+  --color-card: hsl(222 28% 8%);
+  --color-card-foreground: hsl(220 20% 90%);
+  --color-primary: hsl(207 82% 62%);
+  --color-primary-foreground: hsl(222 28% 5%);
+  --color-secondary: hsl(222 28% 11%);
+  --color-secondary-foreground: hsl(220 20% 90%);
+  --color-muted: hsl(222 28% 11%);
+  --color-muted-foreground: hsl(220 12% 48%);
+  --color-accent: hsl(222 28% 13%);
+  --color-accent-foreground: hsl(220 20% 90%);
+  --color-destructive: hsl(355 65% 65%);
+  --color-destructive-foreground: hsl(222 28% 5%);
+  --color-border: hsl(222 28% 13%);
+  --color-input: hsl(222 28% 13%);
+  --color-ring: hsl(207 82% 62%);
+}
+
 /* Auto mode — follow system preference */
 @media (prefers-color-scheme: dark) {
   html[data-theme="auto"] {

@@ -138,6 +138,8 @@
 
   "history.title": "Historial",
   "history.empty": "Aún no hay historial. Tus sesiones de corrección aparecerán aquí.",
+  "history.search": "Buscar en el historial…",
+  "history.noResults": "No hay resultados para tu búsqueda.",
   "history.clear": "Borrar historial",
   "history.clearConfirm": "¿Borrar todo el historial?",
   "history.clearConfirmDesc": "Esto eliminará permanentemente los {count} elementos. Esta acción no se puede deshacer.",
@@ -148,5 +150,12 @@
   "history.style": "Estilo",
   "history.thinking": "Pensamiento",
   "history.enabled": "Guardar historial",
-  "history.enabledDesc": "Almacenar un registro de tus sesiones de corrección localmente"
+  "history.enabledDesc": "Almacenar un registro de tus sesiones de corrección localmente",
+  "history.disableWillClear": "Tienes {count} elementos guardados. Desactivar el historial los eliminará permanentemente.",
+  "history.disableAndClear": "Desactivar & borrar",
+  "history.justDisable": "Solo desactivar",
+
+  "incognito.enable": "Modo incógnito — esta sesión no se guardará",
+  "incognito.disable": "Desactivar incógnito",
+  "incognito.active": "Modo incógnito — esta sesión no se guardará en el historial"
 }

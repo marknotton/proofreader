@@ -138,6 +138,8 @@
 
   "history.title": "History",
   "history.empty": "No history yet. Your proofreading sessions will appear here.",
+  "history.search": "Search history…",
+  "history.noResults": "No results match your search.",
   "history.clear": "Clear history",
   "history.clearConfirm": "Clear all history?",
   "history.clearConfirmDesc": "This will permanently delete all {count} items. This can't be undone.",
@@ -148,5 +150,12 @@
   "history.style": "Style",
   "history.thinking": "Thinking",
   "history.enabled": "Save history",
-  "history.enabledDesc": "Store a log of your proofreading sessions locally"
+  "history.enabledDesc": "Store a log of your proofreading sessions locally",
+  "history.disableWillClear": "You have {count} saved items. Disabling history will permanently delete them.",
+  "history.disableAndClear": "Disable & clear",
+  "history.justDisable": "Just disable",
+
+  "incognito.enable": "Incognito mode — this session won't be saved",
+  "incognito.disable": "Turn off incognito",
+  "incognito.active": "Incognito mode — this session won't be saved to history"
 }

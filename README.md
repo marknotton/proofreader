@@ -103,6 +103,31 @@ Proofreader can run automatically in the background.
 
 ---
 
+## History
+
+### Every session, one click away
+
+When history is enabled, Proofreader saves a log of every proofread session — input, output, style used, and timestamp. Everything is stored locally on your machine and never leaves it.
+
+- **Searchable** — Filter your history by content or style name
+- **Re-use any entry** — Load a previous result straight back into the editor
+- **Per-item delete** — Remove specific entries, or clear the whole log at once
+- **Disable cleanly** — Choose to wipe history when disabling, or keep it as-is
+
+---
+
+## Incognito Mode
+
+### Off the record, when you need it
+
+Flip on Incognito Mode for sessions you don't want saved. The UI shifts to a near-black theme so it's immediately obvious you're in private mode, and nothing gets logged to history — even if history saving is otherwise enabled.
+
+- Toggle it from the toolbar without touching your saved settings
+- Theme reverts to normal the moment you turn it off
+- History button is hidden when history saving is disabled
+
+---
+
 ## Context menu
 
 ### Right-click. Done.
@@ -131,6 +156,8 @@ A tool that stays out of your way.
 - Per-provider API key storage
 - Clear error messages (with optional raw output for debugging)
 - One-click copy for all outputs
+- Proofread history with search (stored locally, fully optional)
+- Incognito mode for off-the-record sessions
 - No subscriptions or locked features
 
 ---
@@ -152,7 +179,8 @@ Proofreader makes a direct API call from your browser to your chosen provider.
 - No servers (except the optional demo mode — see below)
 - No accounts
 - No tracking
-- No data storage
+- No data storage by default — history is opt-in and stored only on your machine
+- Incognito mode skips saving entirely for sensitive sessions
 
 Your API keys stay on your machine. Your text is never stored or logged. Demo mode uses a shared backend for 5 requests only — see the full [Privacy Policy](PRIVACY.md) for details.
 

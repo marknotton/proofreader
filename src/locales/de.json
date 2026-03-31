@@ -138,6 +138,8 @@
 
   "history.title": "Verlauf",
   "history.empty": "Noch kein Verlauf. Deine Korrektursitzungen erscheinen hier.",
+  "history.search": "Verlauf durchsuchen…",
+  "history.noResults": "Keine Ergebnisse für deine Suche.",
   "history.clear": "Verlauf löschen",
   "history.clearConfirm": "Gesamten Verlauf löschen?",
   "history.clearConfirmDesc": "Dadurch werden alle {count} Einträge dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
@@ -148,5 +150,12 @@
   "history.style": "Stil",
   "history.thinking": "Denktiefe",
   "history.enabled": "Verlauf speichern",
-  "history.enabledDesc": "Ein Protokoll deiner Korrektursitzungen lokal speichern"
+  "history.enabledDesc": "Ein Protokoll deiner Korrektursitzungen lokal speichern",
+  "history.disableWillClear": "Du hast {count} gespeicherte Einträge. Das Deaktivieren des Verlaufs wird sie dauerhaft löschen.",
+  "history.disableAndClear": "Deaktivieren & löschen",
+  "history.justDisable": "Nur deaktivieren",
+
+  "incognito.enable": "Inkognito-Modus — diese Sitzung wird nicht gespeichert",
+  "incognito.disable": "Inkognito deaktivieren",
+  "incognito.active": "Inkognito-Modus — diese Sitzung wird nicht im Verlauf gespeichert"
 }

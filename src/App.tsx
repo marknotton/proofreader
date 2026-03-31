@@ -35,7 +35,7 @@ import {
 } from "./lib/history"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2, History, ChevronRight } from "lucide-react"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2, History, ChevronRight, EyeOff, Search } from "lucide-react"
 import { useI18n } from "./context/I18nContext"
 import { LOCALE_IDS, LOCALE_NAMES, type Locale } from "./lib/i18n"
 
@@ -97,6 +97,9 @@ export default function App() {
   const [history, setHistory] = useState<HistoryItem[]>(() => loadHistory())
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [showHistoryDisableConfirm, setShowHistoryDisableConfirm] = useState(false)
+  const [historySearch, setHistorySearch] = useState("")
+  const [incognito, setIncognito] = useState(false)
 
   // ── Auto-proofread state ──
   const [autoShow, setAutoShow] = useState(() => localStorage.getItem(AUTO_SHOW_KEY) !== "false") // visible by default
@@ -213,8 +216,8 @@ export default function App() {
         .replace(/\s*\[TEXT\s*END\]\s*$/i, "")
       setOutput(result)
 
-      // Save to history
-      if (historyEnabled && result.trim()) {
+      // Save to history (skip in incognito mode)
+      if (historyEnabled && !incognito && result.trim()) {
         const updated = addHistoryItem({
           input: text.trim(),
           output: result,
@@ -279,7 +282,7 @@ export default function App() {
       setLoading(false)
       pendingModeRef.current = null
     }
-  }, [apiKey, provider, activeStyle, styles, thinkingOverride, showToast])
+  }, [apiKey, provider, activeStyle, styles, thinkingOverride, showToast, historyEnabled, incognito])
 
   // Keep a ref to the latest runProofread so the storage listener (which never
   // re-subscribes) always calls the current version.
@@ -396,7 +399,16 @@ export default function App() {
     setTheme(t)
     localStorage.setItem(THEME_KEY, t)
     applyTheme(t)
+    // If incognito is active, stay incognito; the restore on exit will use new theme
   }, [])
+
+  const handleIncognitoToggle = useCallback(() => {
+    setIncognito((prev) => {
+      const next = !prev
+      document.documentElement.setAttribute("data-theme", next ? "incognito" : theme)
+      return next
+    })
+  }, [theme])
 
   const handleProviderChange = useCallback((id: ProviderId) => {
     setProvider(id)
@@ -710,6 +722,15 @@ export default function App() {
         d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     }
 
+    const historyQuery = historySearch.toLowerCase()
+    const filteredHistory = historyQuery
+      ? history.filter((item) =>
+          item.output.toLowerCase().includes(historyQuery) ||
+          item.input.toLowerCase().includes(historyQuery) ||
+          item.styleName.toLowerCase().includes(historyQuery)
+        )
+      : history
+
     return (
       <div className="flex flex-col h-screen bg-background text-foreground">
         {/* Header */}
@@ -726,11 +747,35 @@ export default function App() {
                 {t("history.clear")}
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")} aria-label="Close">
+            <Button variant="ghost" size="icon" onClick={() => { setSettingsView("closed"); setHistorySearch("") }} aria-label="Close">
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
+
+        {/* Search */}
+        {history.length > 0 && (
+          <div className="px-4 py-2 border-b border-input shrink-0">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder={t("history.search")}
+                className="w-full rounded-md border border-input bg-muted/30 pl-8 pr-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              {historySearch && (
+                <button
+                  onClick={() => setHistorySearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Clear confirmation */}
         {showClearConfirm && (
@@ -764,9 +809,14 @@ export default function App() {
               <History className="h-8 w-8 text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">{t("history.empty")}</p>
             </div>
+          ) : filteredHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-6">
+              <Search className="h-8 w-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">{t("history.noResults")}</p>
+            </div>
           ) : (
             <ul className="flex flex-col divide-y divide-input">
-              {history.map((item) => (
+              {filteredHistory.map((item) => (
                 <li key={item.id} className="flex items-center gap-2 px-4 py-3 hover:bg-accent/40 transition-colors group">
                   <button
                     className="flex-1 min-w-0 text-left"
@@ -1032,8 +1082,57 @@ export default function App() {
                 <p className="text-sm">{t("history.enabled")}</p>
                 <p className="text-xs text-muted-foreground">{t("history.enabledDesc")}</p>
               </div>
-              <Switch checked={historyEnabled} onCheckedChange={(v) => { setHistoryEnabledState(v); setHistoryEnabled(v) }} />
+              <Switch
+                checked={historyEnabled}
+                onCheckedChange={(v) => {
+                  if (!v && history.length > 0) {
+                    setShowHistoryDisableConfirm(true)
+                  } else {
+                    setHistoryEnabledState(v)
+                    setHistoryEnabled(v)
+                  }
+                }}
+              />
             </label>
+            {showHistoryDisableConfirm && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex flex-col gap-2">
+                <p className="text-sm font-medium">{t("history.clearConfirm")}</p>
+                <p className="text-xs text-muted-foreground">{t("history.disableWillClear", { count: String(history.length) })}</p>
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => {
+                        clearHistory()
+                        setHistory([])
+                        setHistoryEnabledState(false)
+                        setHistoryEnabled(false)
+                        setShowHistoryDisableConfirm(false)
+                      }}
+                    >
+                      {t("history.disableAndClear")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setHistoryEnabledState(false)
+                        setHistoryEnabled(false)
+                        setShowHistoryDisableConfirm(false)
+                      }}
+                    >
+                      {t("history.justDisable")}
+                    </Button>
+                  </div>
+                  <Button size="sm" variant="ghost" className="w-full text-muted-foreground" onClick={() => setShowHistoryDisableConfirm(false)}>
+                    {t("cancel")}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Auto-proofread */}
             <label className="flex items-center justify-between gap-3 cursor-pointer">
@@ -1214,12 +1313,27 @@ export default function App() {
             </Button>
           )
         })}
-        <div className="ml-auto flex gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setSettingsView("history")} title={t("history.title")} aria-label={t("history.title")}>
-            <History className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setSettingsView("settings")} title={t("settings.title")} aria-label={t("settings.title")}>
-            <Settings className="h-4 w-4" />
+        <div className={`ml-auto flex items-center gap-0.5 rounded-lg border px-0.5 py-0.5 transition-colors ${incognito ? "border-primary/40 bg-primary/5" : "border-input/60 bg-muted/20"}`}>
+          {historyEnabled && (
+            <Button variant="ghost" size="icon" onClick={() => setSettingsView("history")} title={t("history.title")} aria-label={t("history.title")} className="h-7 w-7">
+              <History className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {historyEnabled && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleIncognitoToggle}
+              title={t(incognito ? "incognito.disable" : "incognito.enable")}
+              aria-label={t(incognito ? "incognito.disable" : "incognito.enable")}
+              aria-pressed={incognito}
+              className={`h-7 w-7 transition-colors ${incognito ? "text-primary hover:text-primary" : ""}`}
+            >
+              <EyeOff className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setSettingsView("settings")} title={t("settings.title")} aria-label={t("settings.title")} className="h-7 w-7">
+            <Settings className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
@@ -1267,6 +1381,15 @@ export default function App() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Incognito mode strip */}
+      {incognito && (
+        <div className="mx-4 mb-2 flex items-center gap-2 rounded-md border border-primary/20 bg-primary/8 px-3 py-1.5 text-xs text-primary">
+          <EyeOff className="h-3 w-3 shrink-0" />
+          <span>{t("incognito.active")}</span>
+          <button onClick={handleIncognitoToggle} className="ml-auto text-primary/60 hover:text-primary transition-colors">{t("incognito.disable")}</button>
         </div>
       )}
 

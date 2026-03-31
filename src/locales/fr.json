@@ -138,6 +138,8 @@
 
   "history.title": "Historique",
   "history.empty": "Pas encore d'historique. Vos sessions de correction apparaîtront ici.",
+  "history.search": "Rechercher dans l'historique…",
+  "history.noResults": "Aucun résultat ne correspond à votre recherche.",
   "history.clear": "Effacer l'historique",
   "history.clearConfirm": "Effacer tout l'historique ?",
   "history.clearConfirmDesc": "Cela supprimera définitivement les {count} éléments. Cette action est irréversible.",
@@ -148,5 +150,12 @@
   "history.style": "Style",
   "history.thinking": "Réflexion",
   "history.enabled": "Enregistrer l'historique",
-  "history.enabledDesc": "Stocker un journal de vos sessions de correction localement"
+  "history.enabledDesc": "Stocker un journal de vos sessions de correction localement",
+  "history.disableWillClear": "Vous avez {count} éléments enregistrés. Désactiver l'historique les supprimera définitivement.",
+  "history.disableAndClear": "Désactiver & effacer",
+  "history.justDisable": "Juste désactiver",
+
+  "incognito.enable": "Mode incognito — cette session ne sera pas enregistrée",
+  "incognito.disable": "Désactiver l'incognito",
+  "incognito.active": "Mode incognito — cette session ne sera pas enregistrée dans l'historique"
 }
