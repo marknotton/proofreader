@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/assets/slide-intro.webp" alt="Proofreader" width="100%">
+  <img src="src/assets/slide-intro.jpg" alt="Proofreader" width="100%">
 </p>
 
 <p align="center">
