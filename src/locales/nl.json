@@ -24,6 +24,7 @@
   "settings.apiKey": "{provider} API-sleutel",
   "settings.keyFrom": "Haal je sleutel op bij",
   "settings.save": "Opslaan",
+  "settings.deleteKey": "API-sleutel verwijderen",
   "settings.whyKey": "Waarom heb ik mijn eigen API-sleutel nodig?",
   "settings.keyP1": "Deze extensie verbindt rechtstreeks met AI-aanbieders via jouw API-sleutel. Er is geen tussenliggende server, geen account aan te maken en geen gegevens worden gedeeld met iemand anders dan de door jou gekozen AI-aanbieder.",
   "settings.keyP2": "Proofreader is een gratis open-source project zonder sponsoring of financiering van derden. AI-API's rekenen per token, dus het delen van een gemeenschappelijke sleutel zou betekenen dat je een abonnement betaalt of het budget snel opraakt. Door je eigen sleutel te gebruiken, houd je volledige controle over gebruik, kosten en gegevens.",
@@ -113,5 +114,23 @@
   "form.add": "Stijl toevoegen",
   "form.errorName": "Naam is verplicht",
   "form.errorPrompt": "Instructie is verplicht",
-  "form.errorDuplicate": "Er bestaat al een stijl met deze naam"
+  "form.errorDuplicate": "Er bestaat al een stijl met deze naam",
+
+  "toast.perfect1": "Geen wijzigingen nodig — ziet er goed uit!",
+  "toast.perfect2": "Al perfect.",
+  "toast.perfect3": "Niets te corrigeren hier!",
+  "toast.perfect4": "Perfect — geen bewerkingen nodig.",
+  "toast.perfect5": "Brandschoon.",
+
+  "settings.celebrate": "Perfecte resultaat vieringen",
+  "settings.celebrateDesc": "Toon een kleine viering wanneer je tekst geen wijzigingen nodig heeft",
+
+  "demo.title": "Probeer het — {limit} voorbeeldverzoeken inbegrepen",
+  "demo.description": "Deze voorbeelden gebruiken een gedeelde API-sleutel zodat je kunt zien hoe Proofreader werkt. Het is iets trager dan met je eigen sleutel. Proofreader is volledig gratis — voeg gewoon je eigen API-sleutel toe voor de volledige ervaring.",
+  "demo.remaining": "{used} van {limit} voorbeeldverzoeken gebruikt",
+  "demo.addKey": "Voeg je eigen API-sleutel toe",
+  "demo.limitReached": "Voorbeeldverzoeken opgebruikt",
+  "demo.limitReachedDesc": "Voeg je eigen API-sleutel toe om Proofreader te blijven gebruiken — het is volledig gratis. Je hebt alleen een sleutel nodig van een ondersteunde provider.",
+  "demo.connectProvider": "Voeg een API-sleutel toe om te beginnen",
+  "demo.connectProviderDesc": "Proofreader is gratis en open source. Voeg gewoon een API-sleutel toe van Gemini, OpenAI, Anthropic of xAI. Je sleutel blijft op je apparaat — er wordt niets elders naartoe gestuurd."
 }

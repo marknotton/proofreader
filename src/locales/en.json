@@ -24,6 +24,7 @@
   "settings.apiKey": "{provider} API Key",
   "settings.keyFrom": "Get your key from",
   "settings.save": "Save",
+  "settings.deleteKey": "Remove API key",
   "settings.whyKey": "Why do I need my own API key?",
   "settings.keyP1": "This extension connects directly to AI providers using your API key. There is no middleman server, no account to create, and no data shared with anyone other than the AI provider you choose.",
   "settings.keyP2": "Proofreader is a free, open-source side project with no sponsorship or third-party funding. AI APIs charge per token, so bundling a shared key would mean either charging you a subscription or running out of budget quickly. By using your own key, you stay in full control of your usage, costs, and data.",
@@ -113,5 +114,23 @@
   "form.add": "Add Style",
   "form.errorName": "Name is required",
   "form.errorPrompt": "Prompt is required",
-  "form.errorDuplicate": "A style with this name already exists"
+  "form.errorDuplicate": "A style with this name already exists",
+
+  "toast.perfect1": "No changes needed — looks great!",
+  "toast.perfect2": "Already perfect.",
+  "toast.perfect3": "Nothing to fix here!",
+  "toast.perfect4": "Nailed it — no edits needed.",
+  "toast.perfect5": "Clean as a whistle.",
+
+  "settings.celebrate": "Perfect result celebrations",
+  "settings.celebrateDesc": "Show a small celebration when your text needs no changes",
+
+  "demo.title": "Try it out — {limit} sample requests included",
+  "demo.description": "These samples use a shared API key so you can see how Proofreader works. It's a bit slower than using your own key. Proofreader is completely free — just add your own API key for the full experience.",
+  "demo.remaining": "{used} of {limit} sample requests used",
+  "demo.addKey": "Add your own API key",
+  "demo.limitReached": "Sample requests used up",
+  "demo.limitReachedDesc": "Add your own API key to keep using Proofreader — it's completely free. You just need a key from any supported provider.",
+  "demo.connectProvider": "Add an API key to get started",
+  "demo.connectProviderDesc": "Proofreader is free and open source. Just add an API key from Gemini, OpenAI, Anthropic, or xAI. Your key stays on your machine — nothing is sent anywhere else."
 }

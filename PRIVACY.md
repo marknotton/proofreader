@@ -67,6 +67,19 @@ Proofreader has no control over how these providers handle data once it reaches 
 
 ---
 
+## Demo mode
+
+Proofreader includes 5 sample requests so new users can see how the extension works without adding their own API key. These use a shared public API key and are slower than using your own. Here's how it works:
+
+- Your text is sent to a shared backend hosted on Google Cloud Functions, which forwards it to the Google Gemini API for proofreading.
+- A random, anonymous install ID (generated locally on your device) is sent with each request. This ID is used solely to count usage and enforce the 5-request limit — it is not linked to your identity.
+- Your IP address is logged as a secondary abuse-prevention measure. It is stored alongside the install ID in Google Cloud Firestore and is not used for any other purpose.
+- Demo requests are processed by Google Gemini. The same provider privacy considerations described above apply.
+- No text is stored or logged by the shared backend. Once the AI response is returned to your browser, nothing persists server-side.
+- After your 5 demo requests are used, no further data is sent to the shared backend. Adding your own API key switches to direct API calls as described above.
+
+---
+
 ## What Proofreader never does
 
 - Does not collect analytics or usage data

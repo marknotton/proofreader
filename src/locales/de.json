@@ -24,6 +24,7 @@
   "settings.apiKey": "{provider} API-Schlüssel",
   "settings.keyFrom": "Schlüssel erhalten von",
   "settings.save": "Speichern",
+  "settings.deleteKey": "API-Schlüssel entfernen",
   "settings.whyKey": "Warum brauche ich meinen eigenen API-Schlüssel?",
   "settings.keyP1": "Diese Erweiterung verbindet sich direkt mit KI-Anbietern über deinen API-Schlüssel. Es gibt keinen Zwischenserver, kein Konto zu erstellen und keine Datenweitergabe an Dritte außer dem von dir gewählten KI-Anbieter.",
   "settings.keyP2": "Proofreader ist ein kostenloses Open-Source-Seitenprojekt ohne Sponsoring oder Drittmittel. KI-APIs berechnen pro Token, daher würde das Teilen eines gemeinsamen Schlüssels entweder ein Abonnement bedeuten oder das Budget schnell aufbrauchen. Mit deinem eigenen Schlüssel behältst du die volle Kontrolle über Nutzung, Kosten und Daten.",
@@ -113,5 +114,23 @@
   "form.add": "Stil hinzufügen",
   "form.errorName": "Name ist erforderlich",
   "form.errorPrompt": "Anweisung ist erforderlich",
-  "form.errorDuplicate": "Ein Stil mit diesem Namen existiert bereits"
+  "form.errorDuplicate": "Ein Stil mit diesem Namen existiert bereits",
+
+  "toast.perfect1": "Keine Änderungen nötig — sieht super aus!",
+  "toast.perfect2": "Schon perfekt.",
+  "toast.perfect3": "Nichts zu korrigieren!",
+  "toast.perfect4": "Perfekt — keine Bearbeitung nötig.",
+  "toast.perfect5": "Blitzsauber.",
+
+  "settings.celebrate": "Perfektes-Ergebnis-Feier",
+  "settings.celebrateDesc": "Eine kleine Feier anzeigen, wenn dein Text keine Änderungen braucht",
+
+  "demo.title": "Ausprobieren — {limit} Beispielanfragen inklusive",
+  "demo.description": "Diese Beispiele verwenden einen gemeinsamen API-Schlüssel, damit du sehen kannst, wie Proofreader funktioniert. Es ist etwas langsamer als mit deinem eigenen Schlüssel. Proofreader ist komplett kostenlos — füge einfach deinen eigenen API-Schlüssel hinzu für das volle Erlebnis.",
+  "demo.remaining": "{used} von {limit} Beispielanfragen verwendet",
+  "demo.addKey": "Eigenen API-Schlüssel hinzufügen",
+  "demo.limitReached": "Beispielanfragen aufgebraucht",
+  "demo.limitReachedDesc": "Füge deinen eigenen API-Schlüssel hinzu, um Proofreader weiter zu nutzen — es ist komplett kostenlos. Du brauchst nur einen Schlüssel von einem unterstützten Anbieter.",
+  "demo.connectProvider": "API-Schlüssel hinzufügen zum Starten",
+  "demo.connectProviderDesc": "Proofreader ist kostenlos und Open Source. Füge einfach einen API-Schlüssel von Gemini, OpenAI, Anthropic oder xAI hinzu. Dein Schlüssel bleibt auf deinem Gerät — nichts wird anderswohin gesendet."
 }

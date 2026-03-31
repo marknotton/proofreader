@@ -24,6 +24,7 @@
   "settings.apiKey": "Clave API de {provider}",
   "settings.keyFrom": "Obtén tu clave en",
   "settings.save": "Guardar",
+  "settings.deleteKey": "Eliminar clave API",
   "settings.whyKey": "¿Por qué necesito mi propia clave API?",
   "settings.keyP1": "Esta extensión se conecta directamente a los proveedores de IA usando tu clave API. No hay servidor intermediario, no hay cuenta que crear, y no se comparten datos con nadie más que el proveedor de IA que elijas.",
   "settings.keyP2": "Proofreader es un proyecto gratuito de código abierto sin patrocinio ni financiación de terceros. Las API de IA cobran por token, por lo que compartir una clave común significaría cobrarte una suscripción o agotar el presupuesto rápidamente. Al usar tu propia clave, mantienes el control total de tu uso, costes y datos.",
@@ -113,5 +114,23 @@
   "form.add": "Añadir estilo",
   "form.errorName": "El nombre es obligatorio",
   "form.errorPrompt": "La instrucción es obligatoria",
-  "form.errorDuplicate": "Ya existe un estilo con este nombre"
+  "form.errorDuplicate": "Ya existe un estilo con este nombre",
+
+  "toast.perfect1": "Sin cambios necesarios — ¡se ve genial!",
+  "toast.perfect2": "Ya es perfecto.",
+  "toast.perfect3": "¡Nada que corregir aquí!",
+  "toast.perfect4": "Perfecto — sin ediciones necesarias.",
+  "toast.perfect5": "Limpio como una patena.",
+
+  "settings.celebrate": "Celebraciones de resultado perfecto",
+  "settings.celebrateDesc": "Mostrar una pequeña celebración cuando tu texto no necesita cambios",
+
+  "demo.title": "Pruébalo — {limit} solicitudes de ejemplo incluidas",
+  "demo.description": "Estos ejemplos usan una clave API compartida para que veas cómo funciona Proofreader. Es un poco más lento que con tu propia clave. Proofreader es completamente gratuito — solo añade tu propia clave API para la experiencia completa.",
+  "demo.remaining": "{used} de {limit} solicitudes de ejemplo usadas",
+  "demo.addKey": "Añadir tu propia clave API",
+  "demo.limitReached": "Solicitudes de ejemplo agotadas",
+  "demo.limitReachedDesc": "Añade tu propia clave API para seguir usando Proofreader — es completamente gratuito. Solo necesitas una clave de cualquier proveedor compatible.",
+  "demo.connectProvider": "Añade una clave API para empezar",
+  "demo.connectProviderDesc": "Proofreader es gratuito y de código abierto. Solo añade una clave API de Gemini, OpenAI, Anthropic o xAI. Tu clave permanece en tu dispositivo — nada se envía a otro lugar."
 }

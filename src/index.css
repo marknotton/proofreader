@@ -82,6 +82,12 @@ body {
   animation: fade-in 0.15s ease-out;
 }
 
+@keyframes confetti-burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(var(--angle)) scale(0.5); }
+}
+
 /* Auto-proofread button timer fill */
 .auto-btn {
   position: relative;

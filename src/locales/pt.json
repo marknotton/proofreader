@@ -24,6 +24,7 @@
   "settings.apiKey": "Chave API {provider}",
   "settings.keyFrom": "Obtém a tua chave em",
   "settings.save": "Guardar",
+  "settings.deleteKey": "Remover chave API",
   "settings.whyKey": "Por que preciso da minha própria chave API?",
   "settings.keyP1": "Esta extensão liga-se diretamente aos fornecedores de IA usando a tua chave API. Não há servidor intermediário, nenhuma conta para criar e nenhum dado partilhado com ninguém, exceto o fornecedor de IA que escolheres.",
   "settings.keyP2": "O Proofreader é um projeto de código aberto gratuito sem patrocínio ou financiamento de terceiros. As APIs de IA cobram por token, portanto partilhar uma chave comum significaria cobrar-te uma subscrição ou esgotar rapidamente o orçamento. Ao usar a tua própria chave, mantens o controlo total sobre o uso, os custos e os dados.",
@@ -113,5 +114,23 @@
   "form.add": "Adicionar estilo",
   "form.errorName": "O nome é obrigatório",
   "form.errorPrompt": "A instrução é obrigatória",
-  "form.errorDuplicate": "Já existe um estilo com este nome"
+  "form.errorDuplicate": "Já existe um estilo com este nome",
+
+  "toast.perfect1": "Nenhuma alteração necessária — está ótimo!",
+  "toast.perfect2": "Já está perfeito.",
+  "toast.perfect3": "Nada para corrigir aqui!",
+  "toast.perfect4": "Perfeito — sem edições necessárias.",
+  "toast.perfect5": "Limpo como cristal.",
+
+  "settings.celebrate": "Celebrações de resultado perfeito",
+  "settings.celebrateDesc": "Mostrar uma pequena celebração quando o seu texto não precisa de alterações",
+
+  "demo.title": "Experimente — {limit} solicitações de exemplo incluídas",
+  "demo.description": "Estes exemplos usam uma chave API compartilhada para mostrar como o Proofreader funciona. É um pouco mais lento do que com sua própria chave. O Proofreader é completamente gratuito — basta adicionar sua própria chave API para a experiência completa.",
+  "demo.remaining": "{used} de {limit} solicitações de exemplo usadas",
+  "demo.addKey": "Adicionar sua própria chave API",
+  "demo.limitReached": "Solicitações de exemplo esgotadas",
+  "demo.limitReachedDesc": "Adicione sua própria chave API para continuar usando o Proofreader — é completamente gratuito. Você só precisa de uma chave de qualquer provedor compatível.",
+  "demo.connectProvider": "Adicione uma chave API para começar",
+  "demo.connectProviderDesc": "O Proofreader é gratuito e de código aberto. Basta adicionar uma chave API do Gemini, OpenAI, Anthropic ou xAI. Sua chave fica no seu dispositivo — nada é enviado para outro lugar."
 }

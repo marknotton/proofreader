@@ -22,12 +22,14 @@ import {
   setActiveProvider as persistProvider,
 } from "./lib/providers"
 import { proofread } from "./lib/proofread"
+import { getDemoUsed, getDemoLimit, hasDemoRemaining, demoProofread } from "./lib/demo"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2 } from "lucide-react"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2 } from "lucide-react"
 import { useI18n } from "./context/I18nContext"
 import { LOCALE_IDS, LOCALE_NAMES, type Locale } from "./lib/i18n"
 
+const CELEBRATE_KEY = "proofreader_celebrate"
 const HIDE_DONATION_KEY = "proofreader_hide_donation"
 const AUTO_SHOW_KEY = "proofreader_auto_show"
 const AUTO_ENABLED_KEY = "proofreader_auto_enabled"
@@ -76,6 +78,9 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [contextMenuEnabled, setContextMenuEnabled] = useState(false)
   const [hideDonation, setHideDonation] = useState(() => localStorage.getItem(HIDE_DONATION_KEY) === "true")
+  const [celebrateEnabled, setCelebrateEnabled] = useState(() => localStorage.getItem(CELEBRATE_KEY) !== "false")
+  const [miniConfetti, setMiniConfetti] = useState(false)
+  const [demoUsed, setDemoUsed] = useState(() => getDemoUsed())
 
   // ── Auto-proofread state ──
   const [autoShow, setAutoShow] = useState(() => localStorage.getItem(AUTO_SHOW_KEY) !== "false") // visible by default
@@ -104,6 +109,8 @@ export default function App() {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tRef = useRef(t)
   useEffect(() => { tRef.current = t }, [t])
+  const celebrateEnabledRef = useRef(celebrateEnabled)
+  useEffect(() => { celebrateEnabledRef.current = celebrateEnabled }, [celebrateEnabled])
   const pendingModeRef = useRef<{ mode: "proofread" | "replace"; tabId?: number } | null>(null)
 
   const providerConfig = PROVIDERS[provider]
@@ -124,7 +131,9 @@ export default function App() {
     opts?: { mode?: "proofread" | "replace"; tabId?: number; styleName?: string }
   ) => {
     const key = apiKey || getProviderKey(provider)
-    if (!text.trim() || !key) return
+    const isDemo = !key
+    if (!text.trim()) return
+    if (isDemo && !hasDemoRemaining()) return
 
     // If a styleName was passed (e.g. from context menu), use that — the React
     // state may not have flushed yet
@@ -145,20 +154,56 @@ export default function App() {
 
     try {
       let result = ""
-      const thinking = thinkingOverride ?? getStyleThinking(style, provider)
 
-      await proofread(
-        provider,
-        key,
-        style.prompt,
-        text.trim(),
-        (chunk) => {
-          result += chunk
-          setOutput(result)
-        },
-        controller.signal,
-        thinking
-      )
+      if (isDemo) {
+        // Demo mode — non-streaming single response via Firebase proxy
+        // Force thinking to fastest to keep demo snappy (user can still
+        // interact with the slider for UX purposes — we just override here)
+        setThinkingOverride(0)
+        const data = await demoProofread(style.prompt, text.trim(), controller.signal)
+        result = data.result
+        setOutput(result)
+        setDemoUsed(data.used)
+      } else {
+        // Normal streaming proofread
+        const thinking = thinkingOverride ?? getStyleThinking(style, provider)
+
+        await proofread(
+          provider,
+          key,
+          style.prompt,
+          text.trim(),
+          (chunk) => {
+            result += chunk
+            setOutput(result)
+          },
+          controller.signal,
+          thinking
+        )
+      }
+
+      // Strip wrapper tokens some models add (e.g. [TEXT START]...[TEXT END])
+      result = result
+        .replace(/^\s*\[TEXT\s*START\]\s*/i, "")
+        .replace(/\s*\[TEXT\s*END\]\s*$/i, "")
+      setOutput(result)
+
+      // Perfect result — no changes needed
+      const perfectMessages = [
+        tRef.current("toast.perfect1"),
+        tRef.current("toast.perfect2"),
+        tRef.current("toast.perfect3"),
+        tRef.current("toast.perfect4"),
+        tRef.current("toast.perfect5"),
+      ]
+      if (result.trim() === text.trim()) {
+        const msg = perfectMessages[Math.floor(Math.random() * perfectMessages.length)]
+        showToast(msg)
+        if (celebrateEnabledRef.current) {
+          setMiniConfetti(true)
+          setTimeout(() => setMiniConfetti(false), 2500)
+        }
+      }
 
       // Replace mode: send result back to the content script
       if (pendingModeRef.current?.mode === "replace" && pendingModeRef.current.tabId) {
@@ -182,7 +227,12 @@ export default function App() {
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== "AbortError") {
-        setError(sanitiseError(err.message, provider))
+        // Demo errors are already human-readable — skip provider-specific sanitisation
+        const isDemo = !key
+        setError(isDemo
+          ? { message: err.message, raw: err.message }
+          : sanitiseError(err.message, provider)
+        )
         setShowRawError(false)
       }
     } finally {
@@ -201,7 +251,6 @@ export default function App() {
 
   // ── Init ──
   useEffect(() => {
-    if (!apiKey) setSettingsView("settings")
     setApiKeyInput(apiKey)
 
     const chrome = getChromeAPI()
@@ -328,6 +377,12 @@ export default function App() {
       setSettingsView("closed")
     }
   }, [apiKeyInput, provider])
+
+  const handleDeleteKey = useCallback(() => {
+    setProviderKey(provider, "")
+    setApiKey("")
+    setApiKeyInput("")
+  }, [provider])
 
   const handleStylesChange = useCallback((updated: ProofreadStyle[]) => {
     const persisted = saveStyles(updated)
@@ -613,6 +668,17 @@ export default function App() {
               <Button onClick={handleSaveKey} disabled={!apiKeyInput.trim()} className="shrink-0">
                 {t("settings.save")}
               </Button>
+              {getProviderKey(provider) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleDeleteKey}
+                  className="shrink-0 h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  title={t("settings.deleteKey")}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
               {t("settings.keyFrom")}{" "}
@@ -657,18 +723,15 @@ export default function App() {
 
   // ── Settings view ──
   if (settingsView === "settings") {
-    const hasAnyKey = PROVIDER_IDS.some((id) => getProviderKey(id))
     const activeProviderKey = !!getProviderKey(provider)
 
     return (
       <div className="flex flex-col h-screen bg-background text-foreground">
         <div className="flex items-center justify-between px-4 py-3 border-b border-input shrink-0">
           <h2 className="font-semibold">{t("settings.title")}</h2>
-          {hasAnyKey && (
-            <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")} aria-label="Close settings">
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+          <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")} aria-label="Close settings">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
         <div className="flex-1 overflow-auto p-4 flex flex-col gap-5">
@@ -747,6 +810,15 @@ export default function App() {
                 <p className="text-xs text-muted-foreground">{t("settings.contextMenuDesc")}</p>
               </div>
               <Switch checked={contextMenuEnabled} onCheckedChange={handleContextMenuToggle} />
+            </label>
+
+            {/* Perfect result celebrations */}
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div>
+                <p className="text-sm">{t("settings.celebrate")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.celebrateDesc")}</p>
+              </div>
+              <Switch checked={celebrateEnabled} onCheckedChange={(v) => { setCelebrateEnabled(v); localStorage.setItem(CELEBRATE_KEY, String(v)) }} />
             </label>
 
             {/* Auto-proofread */}
@@ -864,9 +936,47 @@ export default function App() {
     )
   }
 
+  // ── Mini confetti for perfect results ──
+  const confettiColors = ["#4A9EF5", "#f472b6", "#fbbf24", "#34d399", "#a78bfa", "#fb923c"]
+  const confettiPieces = miniConfetti ? Array.from({ length: 40 }, (_, i) => {
+    const color = confettiColors[i % confettiColors.length]
+    const left = 30 + Math.random() * 40
+    const rad = Math.random() * Math.PI * 2
+    const dist = 60 + Math.random() * 120
+    const tx = Math.cos(rad) * dist
+    const ty = Math.sin(rad) * dist - 40
+    const delay = Math.random() * 0.15
+    const size = 4 + Math.random() * 4
+    const rotation = (Math.random() - 0.5) * 720
+    return (
+      <span
+        key={i}
+        className="absolute rounded-sm pointer-events-none"
+        style={{
+          left: `${left}%`,
+          top: "50%",
+          width: size,
+          height: size * 0.6,
+          backgroundColor: color,
+          opacity: 0,
+          animation: `confetti-burst 1.8s ${delay}s ease-out forwards`,
+          "--tx": `${tx}px`,
+          "--ty": `${ty}px`,
+          "--angle": `${rotation}deg`,
+        } as React.CSSProperties}
+      />
+    )
+  }) : null
+
   // ── Main view ──
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
+      {/* Mini confetti overlay */}
+      {confettiPieces && (
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+          {confettiPieces}
+        </div>
+      )}
       {/* Style selector */}
       <div className="flex items-center gap-1.5 px-4 py-3 flex-wrap">
         {styles.map((style) => {
@@ -900,11 +1010,57 @@ export default function App() {
         </div>
       </div>
 
+      {/* API key prompt + demo counter — shown when no key is configured */}
+      {!apiKey && (
+        <div className="mx-4 mb-2 rounded-xl border border-primary/30 bg-primary/10 p-4">
+          <div className="flex items-start gap-3">
+            <Zap className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="text-sm">
+              {hasDemoRemaining() ? (
+                <>
+                  <p className="font-medium mb-1">{t("demo.title", { limit: String(getDemoLimit()) })}</p>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {t("demo.description", { limit: String(getDemoLimit()) })}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Info className="h-3.5 w-3.5" />
+                    <span>{t("demo.remaining", { used: String(demoUsed), limit: String(getDemoLimit()) })}</span>
+                  </div>
+                  <button
+                    onClick={() => setSettingsView("provider")}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-transparent px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                  >
+                    {t("demo.addKey")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium mb-1">
+                    {demoUsed >= getDemoLimit() ? t("demo.limitReached") : t("demo.connectProvider")}
+                  </p>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {demoUsed >= getDemoLimit()
+                      ? t("demo.limitReachedDesc")
+                      : t("demo.connectProviderDesc")}
+                  </p>
+                  <button
+                    onClick={() => setSettingsView("provider")}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    {t("demo.addKey")}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Thinking slider — adapts per provider */}
       {renderThinkingSlider()}
 
       {/* Input */}
-      <div className="flex-1 flex flex-col gap-3 px-4 pb-3 min-h-0">
+      <div className={`flex-1 flex flex-col gap-3 px-4 pb-3 min-h-0 ${!apiKey && !hasDemoRemaining() ? "opacity-50 pointer-events-none" : ""}`}>
         <div className="relative flex-1 min-h-[120px]">
           <Textarea
             value={input}
