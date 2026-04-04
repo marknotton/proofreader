@@ -35,7 +35,6 @@
     "contextMenus",
     "activeTab",
     "storage",
-    "clipboardRead",
     "clipboardWrite"
   ],
   "content_security_policy": {
