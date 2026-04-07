@@ -115,13 +115,6 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
     [styles]
   )
 
-  const handleRequestDelete = useCallback(
-    (index: number) => {
-      setView({ kind: "confirmDelete", index, style: styles[index] })
-    },
-    [styles]
-  )
-
   const handleConfirmDelete = useCallback(() => {
     if (view.kind !== "confirmDelete") return
     const updated = styles.filter((_, i) => i !== view.index)
@@ -316,6 +309,11 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
           .map((s) => s.name.toLowerCase())}
         onSave={(style) => handleSaveStyle(style, view.index, view.isNew)}
         onCancel={() => setView({ kind: "list" })}
+        onDelete={!view.isNew ? () => {
+          const updated = styles.filter((_, i) => i !== view.index)
+          onChange(updated)
+          setView({ kind: "list" })
+        } : undefined}
       />
     )
   }
@@ -349,7 +347,8 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
               onDragStart={reordering ? (e) => handleDragStart(e, i) : undefined}
               onDragOver={reordering ? (e) => handleDragOver(e, i) : undefined}
               onDrop={reordering ? (e) => handleDrop(e, i) : undefined}
-              className={`flex items-center gap-2 rounded-md border border-input px-3 py-2 transition-opacity ${reordering ? "cursor-grab active:cursor-grabbing" : ""}`}
+              onClick={!reordering ? () => handleEdit(i) : undefined}
+              className={`flex items-center gap-2 rounded-md border border-input px-3 py-2 transition-colors ${reordering ? "cursor-grab active:cursor-grabbing" : "cursor-pointer hover:bg-accent/50"}`}
             >
               {reordering ? (
                 <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -370,27 +369,8 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
                 </>
               )}
               <span className="flex-1 text-sm truncate">{style.name}</span>
-              {reordering ? null : (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
-                    onClick={() => handleEdit(i)}
-                    title={t("styles.editTitle")}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
-                    onClick={() => handleRequestDelete(i)}
-                    title={t("styles.deleteTitle")}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </>
+              {!reordering && (
+                <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
               )}
             </div>
           )
@@ -445,6 +425,7 @@ interface StyleFormProps {
   existingNames: string[]
   onSave: (style: ProofreadStyle) => void
   onCancel: () => void
+  onDelete?: () => void
 }
 
 /**
@@ -456,8 +437,9 @@ interface StyleFormProps {
  * @param {StyleFormProps} props - Component props
  * @returns {React.ReactElement} The rendered form
  */
-function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFormProps) {
+function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }: StyleFormProps) {
   const { t } = useI18n()
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [name, setName] = useState(initial.name)
   const [prompt, setPrompt] = useState(initial.prompt)
   const [icon, setIcon] = useState<string | undefined>(initial.icon)
@@ -709,13 +691,41 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel }: StyleFor
 
       </div>
 
-      {/* Footer — error + save */}
+      {/* Footer — error + save + delete */}
       <div className="px-4 pb-4 pt-2 flex flex-col gap-2 shrink-0">
         {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
         <Button onClick={handleSave}>
           <Save className="h-3.5 w-3.5" />
           {isNew ? t("form.add") : t("form.save")}
         </Button>
+        {!isNew && onDelete && (
+          <div className="border-t border-input pt-2 mt-1">
+            {showDeleteConfirm ? (
+              <div className="flex flex-col gap-1.5">
+                <p className="text-xs text-muted-foreground">{t("styles.deleteConfirm", { name })}</p>
+                <div className="flex gap-2">
+                  <Button variant="destructive" size="sm" className="flex-1" onClick={onDelete}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t("styles.deleteButton")}
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowDeleteConfirm(false)}>
+                    {t("styles.cancel")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-muted-foreground hover:text-destructive hover:border-destructive/50"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t("styles.deleteTitle")}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

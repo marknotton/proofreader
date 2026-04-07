@@ -1,13 +1,16 @@
 {
   "name": "proofreader",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "version:patch": "bump-my-version bump patch",
+    "version:minor": "bump-my-version bump minor",
+    "version:major": "bump-my-version bump major"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.6",
@@ -24,6 +27,7 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
+    "bump-my-version": "^0.21.0",
     "@eslint/js": "^9.39.4",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",

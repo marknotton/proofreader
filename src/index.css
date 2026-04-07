@@ -127,7 +127,7 @@ body {
   position: absolute;
   inset: 0;
   background: currentColor;
-  opacity: 0.12;
+  opacity: 0.28;
   transform-origin: 50% 100%;
   scale: 1 0;
   transition: scale 0.3s ease-out;

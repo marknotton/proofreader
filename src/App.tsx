@@ -117,6 +117,9 @@ export default function App() {
   const timerResetRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastProofreadTextRef = useRef("")
   const isPasteRef = useRef(false)
+  const isAutoRunRef = useRef(false)
+  const lastAutoHistoryIdRef = useRef<string | null>(null)
+  const outputRef = useRef<HTMLDivElement>(null)
 
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem(THEME_KEY) as Theme | null
@@ -147,7 +150,7 @@ export default function App() {
   //    without being in its dependency array ──
   const runProofread = useCallback(async (
     text: string,
-    opts?: { mode?: "proofread" | "replace"; tabId?: number; styleName?: string }
+    opts?: { mode?: "proofread" | "replace"; tabId?: number; styleName?: string; isAuto?: boolean }
   ) => {
     const key = apiKey || getProviderKey(provider)
     const isDemo = DEMO_ENABLED && !key
@@ -218,6 +221,11 @@ export default function App() {
 
       // Save to history (skip in incognito mode)
       if (historyEnabled && !incognito && result.trim()) {
+        // Auto-typing: replace the previous auto-saved item instead of stacking
+        if (opts?.isAuto && lastAutoHistoryIdRef.current) {
+          deleteHistoryItem(lastAutoHistoryIdRef.current)
+          lastAutoHistoryIdRef.current = null
+        }
         const updated = addHistoryItem({
           input: text.trim(),
           output: result,
@@ -227,6 +235,7 @@ export default function App() {
           spellingLocale: style.spellingLocale,
         })
         setHistory(updated)
+        lastAutoHistoryIdRef.current = opts?.isAuto ? updated[0].id : null
       }
 
       // Perfect result — no changes needed
@@ -482,6 +491,7 @@ export default function App() {
       autoTimerRef.current = setTimeout(() => {
         setTimerActive(false)
         lastProofreadTextRef.current = text
+        isAutoRunRef.current = true
         runProofreadRef.current(text)
       }, autoDelay * 1000)
     }, 320) // just over 0.3s reverse transition
@@ -495,7 +505,10 @@ export default function App() {
   ) => {
     lastProofreadTextRef.current = text
     clearAutoTimer()
-    return originalRunProofread(text, opts)
+    const isAuto = isAutoRunRef.current
+    isAutoRunRef.current = false
+    if (!isAuto) lastAutoHistoryIdRef.current = null  // manual run breaks the auto chain
+    return originalRunProofread(text, { ...opts, isAuto })
   }, [originalRunProofread, clearAutoTimer])
 
   // Update the ref to point to the wrapped version
@@ -589,6 +602,27 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [loading, handleCancel])
 
+  // Cmd+A inside the output card selects all content within it only
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "a" && outputRef.current) {
+        const selection = window.getSelection()
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0)
+          if (outputRef.current.contains(range.commonAncestorContainer)) {
+            e.preventDefault()
+            const newRange = document.createRange()
+            newRange.selectNodeContents(outputRef.current)
+            selection.removeAllRanges()
+            selection.addRange(newRange)
+          }
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
+
   const handleClear = useCallback(() => {
     abortRef.current?.abort()
     setInput("")
@@ -597,6 +631,7 @@ export default function App() {
     setLoading(false)
     clearAutoTimer()
     lastProofreadTextRef.current = ""
+    lastAutoHistoryIdRef.current = null
   }, [clearAutoTimer])
 
   // ── Thinking slider display logic ──
@@ -682,13 +717,13 @@ export default function App() {
           {/* Original */}
           <div className="flex flex-col gap-1.5">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("history.input")}</p>
-            <div className="rounded-md border border-input bg-muted/30 p-3 text-sm whitespace-pre-wrap leading-relaxed">{item.input}</div>
+            <div className="rounded-md border border-input bg-muted/30 p-3 text-sm whitespace-pre-wrap leading-relaxed break-words">{item.input}</div>
           </div>
 
           {/* Result */}
           <div className="flex flex-col gap-1.5">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("history.output")}</p>
-            <div className="rounded-md border border-input bg-muted/30 p-3 text-sm whitespace-pre-wrap leading-relaxed">{item.output}</div>
+            <div className="rounded-md border border-input bg-muted/30 p-3 text-sm whitespace-pre-wrap leading-relaxed break-words">{item.output}</div>
           </div>
         </div>
 
@@ -825,7 +860,7 @@ export default function App() {
                       setSettingsView("history-detail")
                     }}
                   >
-                    <p className="text-sm truncate">{item.output}</p>
+                    <p className="text-sm line-clamp-2 break-words">{item.output}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{formatItemDate(item.timestamp)} · {item.styleName}</p>
                   </button>
                   <button
@@ -1499,7 +1534,7 @@ export default function App() {
         {output && (
           <div aria-live="polite" aria-label="Proofread output" className="contents">
             <Card className="flex-1 min-h-[120px] overflow-auto">
-              <CardContent className="relative">
+              <CardContent className="relative" ref={outputRef}>
                 {!(currentStyle?.markdown && output.includes("```")) && (
                   <Button
                     variant="ghost"
