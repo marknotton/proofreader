@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="#">
+  <a href="https://chromewebstore.google.com/detail/proofreader/pedbmilflmddnmaaclbeneglmamcihmc">
     <img src="https://img.shields.io/badge/Install_on_Chrome-4A9EF5?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Install on Chrome Web Store" height="48">
   </a>
 </p>
