@@ -157,5 +157,15 @@
 
   "incognito.enable": "Incognito mode — this session won't be saved",
   "incognito.disable": "Turn off incognito",
-  "incognito.active": "Incognito mode — this session won't be saved to history"
+  "incognito.active": "Incognito mode — this session won't be saved to history",
+
+  "antiAi.title": "Anti-AI Detection",
+  "antiAi.enable": "Humanise output",
+  "antiAi.enableDesc": "Make results appear more human to AI detectors",
+  "antiAi.desc": "AI detectors flag patterns common in machine-generated text — perfect grammar, formal phrasing, unwavering certainty. This feature nudges the output to read more like a real person wrote it: casual word swaps, small slips, and softened assertions. Nothing here changes the meaning, just how it feels to a detector.",
+  "antiAi.frequency": "Error frequency",
+  "antiAi.types": "Humanisation types",
+  "antiAi.weight": "Weight",
+  "antiAi.includeErrors": "Include errors",
+  "antiAi.includeErrorsDesc": "Inject subtle mistakes — double spaces, a/an slips, repeated words and more"
 }

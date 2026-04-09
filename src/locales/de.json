@@ -9,16 +9,13 @@
   "autoOn": "Autokorrektur aktiv",
   "autoOff": "Autokorrektur inaktiv",
   "smartMarkdown": "Intelligentes Markdown",
-
   "error.showRaw": "Rohfehler anzeigen",
   "error.hideRaw": "Rohfehler ausblenden",
   "error.dismiss": "Schließen",
-
   "toast.replaced": "Ersetzt",
   "toast.couldNotReplace": "Text konnte nicht ersetzt werden",
   "toast.couldNotReachPage": "Seite konnte nicht erreicht werden, um Text zu ersetzen",
   "toast.noTextSelected": "Kein Text ausgewählt",
-
   "settings.title": "Einstellungen",
   "settings.provider": "KI-Anbieter",
   "settings.apiKey": "{provider} API-Schlüssel",
@@ -34,15 +31,12 @@
   "settings.provider.openai": "OpenAI (ChatGPT) — kein kostenloses API-Kontingent. Rechnungsdaten erforderlich, aber Korrekturkosten sind vernachlässigbar.",
   "settings.provider.claude": "Anthropic (Claude) — kein kostenloses API-Kontingent. Erfordert den Kauf von Prepaid-Guthaben. Die tatsächlichen Korrekturkosten sind sehr gering.",
   "settings.provider.grok": "xAI (Grok) — kann für neue Konten Aktionsguthaben anbieten. Aktuelle Angebote auf deren Website prüfen. Korrekturkosten sind sehr gering.",
-
   "settings.theme": "Design",
   "settings.theme.light": "Hell",
   "settings.theme.dark": "Dunkel",
   "settings.theme.auto": "Auto",
-
   "settings.contextMenu": "Kontextmenü",
   "settings.contextMenuDesc": "Korrektur-Optionen im Kontextmenü anzeigen",
-
   "settings.autoShow": "Autokorrektur-Schaltfläche",
   "settings.autoShowDesc": "Autokorrektur-Schaltfläche auf der Hauptseite anzeigen",
   "settings.autoPaste": "Auto beim Einfügen",
@@ -51,23 +45,18 @@
   "settings.autoTypeDesc": "Korrigieren nach einer Pause beim Tippen",
   "settings.autoDelay": "Verzögerung",
   "settings.autoWarning": "Die automatische Korrektur beim Tippen verbraucht mehr Tokens und kann deine API-Kosten erhöhen. Verwende eine angemessene Verzögerung.",
-
   "settings.manageStyles": "Stile verwalten",
-
   "settings.donation.intro": "Hallo, ich bin {name} — ein Entwickler aus dem Vereinigten Königreich. Ich habe diese Erweiterung für mich selbst entwickelt und dachte, dass sie auch anderen nützlich sein könnte.",
   "settings.donation.ask": "Wenn sie dir ein paar Minuten gespart hat, würde mich ein Kaffee sehr freuen.",
   "settings.donation.button": "Kauf mir einen Kaffee",
   "settings.donation.hide": "Auf der Hauptseite ausblenden",
-
   "settings.about": "Über Proofreader",
   "settings.about.p1": "Danke, dass du Proofreader nutzt! Dies ist ein kostenloses Open-Source-Seitenprojekt, das in meiner Freizeit entwickelt und gepflegt wird. Keine Werbung, kein Tracking, keine Datenerhebung — nur ein einfaches Tool, das eine Sache gut macht.",
   "settings.about.p2": "Wenn du auf Probleme stößt, Ideen für neue Funktionen hast oder beitragen möchtest, ist das Projekt auf GitHub. Fehlerberichte, Pull Requests und Feedback sind willkommen.",
   "settings.about.link": "github.com/marknotton/proofreader",
-
   "settings.language": "Sprache",
   "settings.languageNote": "Übersetzungen wurden mit KI erstellt und sind möglicherweise nicht vollständig korrekt.",
   "settings.languageContribute": "Zu Übersetzungen auf GitHub beitragen",
-
   "thinking.low": "Niedrig",
   "thinking.medium": "Mittel",
   "thinking.high": "Hoch",
@@ -76,7 +65,6 @@
   "thinking.fastest": "Am schnellsten",
   "thinking.balanced": "Ausgewogen",
   "thinking.thorough": "Gründlich",
-
   "styles.title": "Stile verwalten",
   "styles.addStyle": "Stil hinzufügen",
   "styles.export": "Exportieren",
@@ -95,7 +83,6 @@
   "styles.noStyles": "Die Datei enthielt keine Stile.",
   "styles.reorder": "Neu anordnen",
   "styles.reorderDone": "Fertig",
-
   "form.addTitle": "Stil hinzufügen",
   "form.editTitle": "Stil bearbeiten",
   "form.name": "Name",
@@ -117,16 +104,13 @@
   "form.errorName": "Name ist erforderlich",
   "form.errorPrompt": "Anweisung ist erforderlich",
   "form.errorDuplicate": "Ein Stil mit diesem Namen existiert bereits",
-
   "toast.perfect1": "Keine Änderungen nötig — sieht super aus!",
   "toast.perfect2": "Schon perfekt.",
   "toast.perfect3": "Nichts zu korrigieren!",
   "toast.perfect4": "Perfekt — keine Bearbeitung nötig.",
   "toast.perfect5": "Blitzsauber.",
-
   "settings.celebrate": "Perfektes-Ergebnis-Feier",
   "settings.celebrateDesc": "Eine kleine Feier anzeigen, wenn dein Text keine Änderungen braucht",
-
   "demo.title": "Ausprobieren — {limit} Beispielanfragen inklusive",
   "demo.description": "Diese Beispiele verwenden einen gemeinsamen API-Schlüssel, damit du sehen kannst, wie Proofreader funktioniert. Es ist etwas langsamer als mit deinem eigenen Schlüssel. Proofreader ist komplett kostenlos — füge einfach deinen eigenen API-Schlüssel hinzu für das volle Erlebnis.",
   "demo.remaining": "{used} von {limit} Beispielanfragen verwendet",
@@ -135,7 +119,6 @@
   "demo.limitReachedDesc": "Füge deinen eigenen API-Schlüssel hinzu, um Proofreader weiter zu nutzen — es ist komplett kostenlos. Du brauchst nur einen Schlüssel von einem unterstützten Anbieter.",
   "demo.connectProvider": "API-Schlüssel hinzufügen zum Starten",
   "demo.connectProviderDesc": "Proofreader ist kostenlos und Open Source. Füge einfach einen API-Schlüssel von Gemini, OpenAI, Anthropic oder xAI hinzu. Dein Schlüssel bleibt auf deinem Gerät — nichts wird anderswohin gesendet.",
-
   "history.title": "Verlauf",
   "history.empty": "Noch kein Verlauf. Deine Korrektursitzungen erscheinen hier.",
   "history.search": "Verlauf durchsuchen…",
@@ -154,8 +137,16 @@
   "history.disableWillClear": "Du hast {count} gespeicherte Einträge. Das Deaktivieren des Verlaufs wird sie dauerhaft löschen.",
   "history.disableAndClear": "Deaktivieren & löschen",
   "history.justDisable": "Nur deaktivieren",
-
   "incognito.enable": "Inkognito-Modus — diese Sitzung wird nicht gespeichert",
   "incognito.disable": "Inkognito deaktivieren",
-  "incognito.active": "Inkognito-Modus — diese Sitzung wird nicht im Verlauf gespeichert"
+  "incognito.active": "Inkognito-Modus — diese Sitzung wird nicht im Verlauf gespeichert",
+  "antiAi.title": "Anti-KI-Erkennung",
+  "antiAi.enable": "Ausgabe humanisieren",
+  "antiAi.enableDesc": "Ergebnisse für KI-Detektoren menschlicher erscheinen lassen",
+  "antiAi.desc": "KI-Detektoren erkennen Muster, die in maschinengenerierten Texten häufig vorkommen — perfekte Grammatik, formelle Ausdrucksweise, unerschütterliche Gewissheit. Diese Funktion lässt die Ausgabe eher so klingen, als hätte sie ein Mensch geschrieben: lockere Wortwechsel, kleine Fehler und abgemilderte Aussagen. Nichts hier verändert die Bedeutung, nur das Gefühl für einen Detektor.",
+  "antiAi.frequency": "Fehlerhäufigkeit",
+  "antiAi.types": "Humanisierungstypen",
+  "antiAi.weight": "Gewicht",
+  "antiAi.includeErrors": "Fehler einschließen",
+  "antiAi.includeErrorsDesc": "Subtile Fehler einfügen — doppelte Leerzeichen, a/an-Fehler, wiederholte Wörter und mehr"
 }

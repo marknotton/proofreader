@@ -449,7 +449,6 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }
   )
   const [markdown, setMarkdown] = useState(initial.markdown ?? false)
   const [spellingLocale, setSpellingLocale] = useState<SpellingLocale>(initial.spellingLocale ?? "none")
-  const [showThinking, setShowThinking] = useState(false)
   const [showIcons, setShowIcons] = useState(false)
   const [showColors, setShowColors] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -627,55 +626,47 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }
 
         {/* Thinking budgets */}
         <div className="flex flex-col gap-1.5">
-          <button
-            onClick={() => setShowThinking(!showThinking)}
-            className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors w-full text-left"
-          >
-            {t("form.thinking")}
-            <ChevronDown className={`h-3 w-3 ml-auto transition-transform ${showThinking ? "rotate-180" : ""}`} />
-          </button>
-          {showThinking && (
-            <div className="flex flex-col gap-3 p-3 rounded-md border border-input bg-card">
-              <p className="text-[10px] text-muted-foreground leading-relaxed">{t("form.thinkingDesc")}</p>
-              {PROVIDER_IDS.map((id) => {
-                const cfg = PROVIDERS[id].thinking
-                if (!cfg.supported || cfg.type === "none") return null
-                const val = thinkingByProvider[id] ?? cfg.default
-                if (cfg.type === "effort") {
-                  const labels = cfg.effortLabels || effortLabels
-                  return (
-                    <div key={id} className="flex flex-col gap-1">
-                      <span className="text-[11px] text-muted-foreground">{PROVIDERS[id].label}</span>
-                      <div className="flex rounded-md border border-input overflow-hidden">
-                        {labels.map((label, i) => (
-                          <button
-                            key={label}
-                            onClick={() => updateThinking(id, i)}
-                            className={`flex-1 py-1 text-[11px] font-medium transition-colors ${val === i ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-accent"}`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                }
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("form.thinking")}</p>
+          <div className="flex flex-col gap-3 p-3 rounded-md border border-input bg-card">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">{t("form.thinkingDesc")}</p>
+            {PROVIDER_IDS.map((id) => {
+              const cfg = PROVIDERS[id].thinking
+              if (!cfg.supported || cfg.type === "none") return null
+              const val = thinkingByProvider[id] ?? cfg.default
+              if (cfg.type === "effort") {
+                const labels = cfg.effortLabels || effortLabels
                 return (
                   <div key={id} className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-muted-foreground">{PROVIDERS[id].label}</span>
-                      <span className="text-[10px] text-muted-foreground">{geminiLabel(val)}</span>
+                    <span className="text-[11px] text-muted-foreground">{PROVIDERS[id].label}</span>
+                    <div className="flex rounded-md border border-input overflow-hidden">
+                      {labels.map((label, i) => (
+                        <button
+                          key={label}
+                          onClick={() => updateThinking(id, i)}
+                          className={`flex-1 py-1 text-[11px] font-medium transition-colors ${val === i ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-accent"}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
-                    <input
-                      type="range" min={0} max={8192} step={1024} value={val}
-                      onChange={(e) => updateThinking(id, Number(e.target.value))}
-                      className="w-full h-1.5 accent-primary"
-                    />
                   </div>
                 )
-              })}
-            </div>
-          )}
+              }
+              return (
+                <div key={id} className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">{PROVIDERS[id].label}</span>
+                    <span className="text-[10px] text-muted-foreground">{geminiLabel(val)}</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={8192} step={1024} value={val}
+                    onChange={(e) => updateThinking(id, Number(e.target.value))}
+                    className="w-full h-1.5 accent-primary"
+                  />
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         {/* Prompt — anchored at bottom, fills remaining space */}

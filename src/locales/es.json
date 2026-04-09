@@ -9,16 +9,13 @@
   "autoOn": "Revisión automática activada",
   "autoOff": "Revisión automática desactivada",
   "smartMarkdown": "Markdown inteligente",
-
   "error.showRaw": "Mostrar error sin procesar",
   "error.hideRaw": "Ocultar error sin procesar",
   "error.dismiss": "Cerrar",
-
   "toast.replaced": "Reemplazado",
   "toast.couldNotReplace": "No se pudo reemplazar el texto",
   "toast.couldNotReachPage": "No se pudo acceder a la página para reemplazar el texto",
   "toast.noTextSelected": "No hay texto seleccionado",
-
   "settings.title": "Configuración",
   "settings.provider": "Proveedor de IA",
   "settings.apiKey": "Clave API de {provider}",
@@ -34,15 +31,12 @@
   "settings.provider.openai": "OpenAI (ChatGPT) — sin nivel API gratuito. Requiere datos de facturación, pero los costes de revisión son insignificantes.",
   "settings.provider.claude": "Anthropic (Claude) — sin nivel API gratuito. Requiere la compra de crédito prepagado. Los costes reales de revisión son muy bajos.",
   "settings.provider.grok": "xAI (Grok) — puede ofrecer créditos promocionales para nuevas cuentas. Consulta su sitio para las ofertas actuales. Los costes de revisión son muy bajos.",
-
   "settings.theme": "Tema",
   "settings.theme.light": "Claro",
   "settings.theme.dark": "Oscuro",
   "settings.theme.auto": "Auto",
-
   "settings.contextMenu": "Menú contextual",
   "settings.contextMenuDesc": "Mostrar opciones de revisión en el menú contextual",
-
   "settings.autoShow": "Botón de revisión automática",
   "settings.autoShowDesc": "Mostrar el botón de revisión automática en la página principal",
   "settings.autoPaste": "Auto al pegar",
@@ -51,23 +45,18 @@
   "settings.autoTypeDesc": "Revisar después de una pausa al escribir",
   "settings.autoDelay": "Retraso",
   "settings.autoWarning": "La revisión automática al escribir usará más tokens y puede aumentar tus costes de API. Usa un retraso razonable.",
-
   "settings.manageStyles": "Gestionar estilos",
-
   "settings.donation.intro": "Hola, soy {name} — un desarrollador del Reino Unido. Creé esta extensión para mí mismo y pensé que otros también podrían encontrarla útil.",
   "settings.donation.ask": "Si te ha ahorrado unos minutos, un café me haría muy feliz.",
   "settings.donation.button": "Invítame a un café",
   "settings.donation.hide": "Ocultar en la página principal",
-
   "settings.about": "Acerca de Proofreader",
   "settings.about.p1": "¡Gracias por usar Proofreader! Es un proyecto gratuito de código abierto desarrollado y mantenido en mi tiempo libre. No hay anuncios, ni seguimiento, ni recopilación de datos — solo una herramienta sencilla que hace una cosa bien.",
   "settings.about.p2": "Si encuentras problemas, tienes ideas de funcionalidades o quieres contribuir, el proyecto está en GitHub. Los informes de errores, las pull requests y los comentarios son bienvenidos.",
   "settings.about.link": "github.com/marknotton/proofreader",
-
   "settings.language": "Idioma",
   "settings.languageNote": "Las traducciones se realizaron con IA y pueden no ser completamente precisas.",
   "settings.languageContribute": "Contribuir a las traducciones en GitHub",
-
   "thinking.low": "Bajo",
   "thinking.medium": "Medio",
   "thinking.high": "Alto",
@@ -76,7 +65,6 @@
   "thinking.fastest": "Más rápido",
   "thinking.balanced": "Equilibrado",
   "thinking.thorough": "Exhaustivo",
-
   "styles.title": "Gestionar estilos",
   "styles.addStyle": "Añadir estilo",
   "styles.export": "Exportar",
@@ -95,7 +83,6 @@
   "styles.noStyles": "El archivo no contenía estilos.",
   "styles.reorder": "Reordenar",
   "styles.reorderDone": "Listo",
-
   "form.addTitle": "Añadir estilo",
   "form.editTitle": "Editar estilo",
   "form.name": "Nombre",
@@ -117,16 +104,13 @@
   "form.errorName": "El nombre es obligatorio",
   "form.errorPrompt": "La instrucción es obligatoria",
   "form.errorDuplicate": "Ya existe un estilo con este nombre",
-
   "toast.perfect1": "Sin cambios necesarios — ¡se ve genial!",
   "toast.perfect2": "Ya es perfecto.",
   "toast.perfect3": "¡Nada que corregir aquí!",
   "toast.perfect4": "Perfecto — sin ediciones necesarias.",
   "toast.perfect5": "Limpio como una patena.",
-
   "settings.celebrate": "Celebraciones de resultado perfecto",
   "settings.celebrateDesc": "Mostrar una pequeña celebración cuando tu texto no necesita cambios",
-
   "demo.title": "Pruébalo — {limit} solicitudes de ejemplo incluidas",
   "demo.description": "Estos ejemplos usan una clave API compartida para que veas cómo funciona Proofreader. Es un poco más lento que con tu propia clave. Proofreader es completamente gratuito — solo añade tu propia clave API para la experiencia completa.",
   "demo.remaining": "{used} de {limit} solicitudes de ejemplo usadas",
@@ -135,7 +119,6 @@
   "demo.limitReachedDesc": "Añade tu propia clave API para seguir usando Proofreader — es completamente gratuito. Solo necesitas una clave de cualquier proveedor compatible.",
   "demo.connectProvider": "Añade una clave API para empezar",
   "demo.connectProviderDesc": "Proofreader es gratuito y de código abierto. Solo añade una clave API de Gemini, OpenAI, Anthropic o xAI. Tu clave permanece en tu dispositivo — nada se envía a otro lugar.",
-
   "history.title": "Historial",
   "history.empty": "Aún no hay historial. Tus sesiones de corrección aparecerán aquí.",
   "history.search": "Buscar en el historial…",
@@ -154,8 +137,16 @@
   "history.disableWillClear": "Tienes {count} elementos guardados. Desactivar el historial los eliminará permanentemente.",
   "history.disableAndClear": "Desactivar & borrar",
   "history.justDisable": "Solo desactivar",
-
   "incognito.enable": "Modo incógnito — esta sesión no se guardará",
   "incognito.disable": "Desactivar incógnito",
-  "incognito.active": "Modo incógnito — esta sesión no se guardará en el historial"
+  "incognito.active": "Modo incógnito — esta sesión no se guardará en el historial",
+  "antiAi.title": "Detección Anti-IA",
+  "antiAi.enable": "Humanizar salida",
+  "antiAi.enableDesc": "Hacer que los resultados parezcan más humanos a los detectores de IA",
+  "antiAi.desc": "Los detectores de IA identifican patrones comunes en textos generados por máquinas — gramática perfecta, frases formales, certeza inquebrantable. Esta función ajusta la salida para que parezca más escrita por una persona real: cambios de palabras informales, pequeños deslices y afirmaciones suavizadas. Nada aquí cambia el significado, solo cómo lo percibe un detector.",
+  "antiAi.frequency": "Frecuencia de errores",
+  "antiAi.types": "Tipos de humanización",
+  "antiAi.weight": "Peso",
+  "antiAi.includeErrors": "Incluir errores",
+  "antiAi.includeErrorsDesc": "Insertar errores sutiles — dobles espacios, errores a/an, palabras repetidas y más"
 }

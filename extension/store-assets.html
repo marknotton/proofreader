@@ -65,9 +65,9 @@
     .asset-label::before { content: '▸'; }
 
     /* ── Frames ── */
-    .frame-1290 { width: 1290px; height: 810px;  position: relative; overflow: hidden; flex-shrink: 0; }
-    .frame-450  { width: 450px;  height: 290px;  position: relative; overflow: hidden; flex-shrink: 0; }
-    .frame-1410 { width: 1410px; height: 570px;  position: relative; overflow: hidden; flex-shrink: 0; }
+    .frame-1280 { width: 1280px; height: 800px;  position: relative; overflow: hidden; flex-shrink: 0; }
+    .frame-440  { width: 440px;  height: 280px;  position: relative; overflow: hidden; flex-shrink: 0; }
+    .frame-1400 { width: 1400px; height: 560px;  position: relative; overflow: hidden; flex-shrink: 0; }
 
     /* ── Background layers ── */
     .bg-base {
@@ -98,25 +98,25 @@
 
     /* ── Typography ── */
     .eyebrow {
-      font-size: 11px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.15em;
       text-transform: uppercase;
       color: var(--blue);
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .eyebrow-dash {
       display: inline-block;
-      width: 22px; height: 2px;
+      width: 28px; height: 2px;
       background: var(--blue);
       border-radius: 2px;
       flex-shrink: 0;
     }
     .headline {
-      font-size: 58px;
+      font-size: 64px;
       font-weight: 700;
       letter-spacing: -0.04em;
       line-height: 1.04;
@@ -125,33 +125,33 @@
       text-align: center;
     }
     .headline-md {
-      font-size: 44px;
+      font-size: 56px;
       font-weight: 700;
       letter-spacing: -0.035em;
       line-height: 1.05;
       color: var(--text);
-      margin-bottom: 16px;
+      margin-bottom: 24px;
     }
     .body-copy {
-      font-size: 15px;
+      font-size: 20px;
       color: var(--muted);
-      line-height: 1.72;
+      line-height: 1.65;
     }
 
     /* ── Pills ── */
     .pills {
       display: flex;
       flex-wrap: wrap;
-      gap: 9px;
-      margin-top: 26px;
+      gap: 11px;
+      margin-top: 30px;
       justify-content: center;
     }
     .pill {
       background: rgba(74,158,245,0.1);
       border: 1px solid rgba(74,158,245,0.22);
       border-radius: 100px;
-      padding: 7px 16px;
-      font-size: 12.5px;
+      padding: 10px 22px;
+      font-size: 17px;
       color: #9ecaf7;
       font-weight: 500;
       letter-spacing: 0.01em;
@@ -159,33 +159,33 @@
     }
 
     /* ── Feature list ── */
-    .feats { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; }
-    .feat  { display: flex; align-items: flex-start; gap: 11px; }
+    .feats { display: flex; flex-direction: column; gap: 20px; margin-top: 28px; }
+    .feat  { display: flex; align-items: flex-start; gap: 16px; }
     .feat-dot {
-      width: 5px; height: 5px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--blue);
-      margin-top: 8px;
+      margin-top: 9px;
       flex-shrink: 0;
-      box-shadow: 0 0 8px rgba(74,158,245,0.55);
+      box-shadow: 0 0 10px rgba(74,158,245,0.7);
     }
-    .feat-text { font-size: 14px; color: var(--muted); line-height: 1.55; }
+    .feat-text { font-size: 22px; color: var(--muted); line-height: 1.45; }
     .feat-text strong { color: var(--text); font-weight: 600; }
 
     /* ── Provider grid ── */
-    .pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 28px; }
     .pcard {
       background: rgba(17,29,46,0.75);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px 15px;
+      border-radius: 16px;
+      padding: 18px 20px;
       display: flex;
       align-items: center;
-      gap: 11px;
+      gap: 16px;
     }
-    .pcard-logo { width: 24px; height: 24px; flex-shrink: 0; }
-    .pcard-info strong { display: block; font-size: 12px; color: var(--text); font-weight: 600; }
-    .pcard-info small  { display: block; font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+    .pcard-logo { width: 36px; height: 36px; flex-shrink: 0; }
+    .pcard-info strong { display: block; font-size: 18px; color: var(--text); font-weight: 600; }
+    .pcard-info small  { display: none; }
 
     /* ── Product screenshot ── */
     .ss {
@@ -224,6 +224,34 @@
       z-index: 20;
     }
 
+    /* ── Download overlay ── */
+    .dl-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      background: rgba(10,20,35,0.75);
+      border: 1px solid rgba(74,158,245,0.4);
+      border-radius: 8px;
+      color: #4A9EF5;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.05em;
+      padding: 7px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      backdrop-filter: blur(6px);
+    }
+    .dl-btn:hover { background: rgba(10,20,35,0.9); border-color: rgba(74,158,245,0.7); }
+    .dl-btn svg { flex-shrink: 0; }
+    [class^="frame-"]:hover .dl-btn { opacity: 1; }
+
     /* ── Two-column screenshot layout (S2–S5) ── */
     .split-inner {
       display: flex;
@@ -231,14 +259,14 @@
       width: 100%;
       height: 100%;
     }
-    /* Left col: screenshot aligned right within its half */
+    /* Left col: screenshot anchored top, clips at bottom */
     .split-left {
       flex: 0 0 50%;
       height: 100%;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: flex-end;
-      padding: 44px 36px 44px 56px;
+      padding: 10px 32px 0 40px;
       position: relative;
     }
     /* The screenshot + owl wrapper — owl overflows this container */
@@ -270,7 +298,7 @@
     <a href="#s3">S3 · Main Editor</a>
     <a href="#s4">S4 · Settings</a>
     <a href="#s5">S5 · Styles</a>
-    <a href="#p-sm">Promo Small 440×280</a>
+    <a href="#p-sm">Promo Small A · Stacked · 440×280</a>
     <a href="#p-lg">Promo Marquee 1400×560</a>
   </div>
 </div>
@@ -281,8 +309,8 @@
      Centred. Icon only. Lots of feature pills.
      ══════════════════════════════════════════════════════════ -->
 <div class="asset-group" id="s1">
-  <div class="asset-label">Screenshot 1 · Overview &amp; Key Benefits · 1290×810 → crop to 1280×800</div>
-  <div class="frame-1290">
+  <div class="asset-label">Screenshot 1 · Overview &amp; Key Benefits · 1280×800</div>
+  <div class="frame-1280">
 
     <div class="bg-base"></div>
     <div class="bg-photo"></div>
@@ -325,8 +353,8 @@
      Content right, left-aligned.
      ══════════════════════════════════════════════════════════ -->
 <div class="asset-group" id="s2">
-  <div class="asset-label">Screenshot 2 · AI Provider Selection · 1290×810 → crop to 1280×800</div>
-  <div class="frame-1290">
+  <div class="asset-label">Screenshot 2 · AI Provider Selection · 1280×800</div>
+  <div class="frame-1280">
 
     <div class="bg-base"></div>
     <div class="bg-photo"></div>
@@ -340,10 +368,10 @@
         <div class="split-left">
           <div class="ss-wrap">
             <img src="assets/screenshot-ai-provider.webp" alt="AI provider view" class="ss"
-              style="max-height:680px;width:auto;position:relative;z-index:1;">
-            <img src="assets/owl-ai.webp" alt=""
-              style="position:absolute;width:200px;bottom:-36px;right:-44px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
+              style="height:1060px;width:auto;position:relative;top:70px;z-index:1;">
           </div>
+          <img src="assets/owl-ai.webp" alt=""
+            style="position:absolute;width:320px;bottom:-90px;right:332px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
         </div>
 
         <!-- Right: content -->
@@ -351,7 +379,7 @@
           <div style="max-width:480px;">
             <div class="eyebrow"><span class="eyebrow-dash"></span>AI Providers</div>
             <div class="headline-md">Your AI,<br>your key.</div>
-            <p class="body-copy">Connect directly to the AI you already use. No subscription, no shared servers — just your API key, your text, and nothing in between.</p>
+            <p class="body-copy" style="font-size:19px;margin-bottom:24px;">Bring your own API key — no subscription, no middleman.</p>
             <div class="pgrid">
               <div class="pcard">
                 <img src="assets/gemini.svg"    class="pcard-logo" alt="Gemini">
@@ -387,8 +415,8 @@
      Content right, left-aligned.
      ══════════════════════════════════════════════════════════ -->
 <div class="asset-group" id="s3">
-  <div class="asset-label">Screenshot 3 · Main Editor Interface · 1290×810 → crop to 1280×800</div>
-  <div class="frame-1290">
+  <div class="asset-label">Screenshot 3 · Main Editor Interface · 1280×800</div>
+  <div class="frame-1280">
 
     <div class="bg-base"></div>
     <div class="bg-photo"></div>
@@ -401,10 +429,10 @@
         <div class="split-left">
           <div class="ss-wrap">
             <img src="assets/screenshot-main.webp" alt="Main editor" class="ss"
-              style="max-height:680px;width:auto;position:relative;z-index:1;">
-            <img src="assets/owl-lanuages.webp" alt=""
-              style="position:absolute;width:200px;bottom:-36px;left:-44px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
+              style="height:1060px;width:auto;position:relative;top:70px;z-index:1;">
           </div>
+          <img src="assets/owl-lanuages.webp" alt=""
+            style="position:absolute;width:330px;bottom:-20px;left:370px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
         </div>
 
         <!-- Right: content -->
@@ -412,11 +440,9 @@
           <div style="max-width:480px;">
             <div class="eyebrow"><span class="eyebrow-dash"></span>The Editor</div>
             <div class="headline-md">Clean copy<br>in seconds.</div>
-            <p class="body-copy">Paste your text, choose a writing style, and hit Proofread. Clean results come back fast — then copy them straight back to where you started.</p>
             <div class="feats">
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Auto-proofread on paste</strong> — no button press required</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Right-click from anywhere</strong> — proofread selected text on any page</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Smart Markdown</strong> — renders code blocks with one-click copy</div></div>
+              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Auto-proofread on paste</strong><br>hands-free, instant correction</div></div>
+              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Right-click anywhere</strong><br>proofread any selected text, on any page</div></div>
             </div>
           </div>
         </div>
@@ -435,8 +461,8 @@
      Content right, left-aligned.
      ══════════════════════════════════════════════════════════ -->
 <div class="asset-group" id="s4">
-  <div class="asset-label">Screenshot 4 · Settings Panel · 1290×810 → crop to 1280×800</div>
-  <div class="frame-1290">
+  <div class="asset-label">Screenshot 4 · Settings Panel · 1280×800</div>
+  <div class="frame-1280">
 
     <div class="bg-base"></div>
     <div class="bg-photo"></div>
@@ -450,10 +476,10 @@
         <div class="split-left">
           <div class="ss-wrap">
             <img src="assets/screenshot-settings.webp" alt="Settings panel" class="ss"
-              style="max-height:680px;width:auto;position:relative;z-index:1;">
-            <img src="assets/owl-settings.webp" alt=""
-              style="position:absolute;width:200px;bottom:-36px;right:-44px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
+              style="height:1060px;width:auto;position:relative;top:70px;z-index:1;">
           </div>
+          <img src="assets/owl-settings.webp" alt=""
+            style="position:absolute;width:320px;bottom:-20px;right:-40px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
         </div>
 
         <!-- Right: content -->
@@ -461,12 +487,9 @@
           <div style="max-width:480px;">
             <div class="eyebrow"><span class="eyebrow-dash"></span>Settings</div>
             <div class="headline-md">Tuned to<br>how you work.</div>
-            <p class="body-copy">Auto-proofread on paste, trigger after a typing pause, switch themes, enable the right-click menu — Proofreader adapts around you. Everything stays on your machine.</p>
             <div class="feats">
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Light, dark, or auto</strong> theme — follows your system preference</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Auto-proofread on paste</strong> — hands-free, instant correction</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Proofread history</strong> — searchable log of every session, stored only on your device</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Incognito mode</strong> — prevents sessions from being saved to your local history</div></div>
+              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>History &amp; incognito</strong><br>log every session, or keep it off the record</div></div>
+              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Light, dark, or auto</strong><br>follows your system theme</div></div>
             </div>
           </div>
         </div>
@@ -485,8 +508,8 @@
      Content right, left-aligned.
      ══════════════════════════════════════════════════════════ -->
 <div class="asset-group" id="s5">
-  <div class="asset-label">Screenshot 5 · Styles &amp; Customisation · 1290×810 → crop to 1280×800</div>
-  <div class="frame-1290">
+  <div class="asset-label">Screenshot 5 · Styles &amp; Customisation · 1280×800</div>
+  <div class="frame-1280">
 
     <div class="bg-base"></div>
     <div class="bg-photo"></div>
@@ -500,23 +523,20 @@
         <div class="split-left">
           <div class="ss-wrap">
             <img src="assets/screenshot-styles.webp" alt="Styles panel" class="ss"
-              style="max-height:680px;width:auto;position:relative;z-index:1;">
-            <img src="assets/owl-styles.webp" alt=""
-              style="position:absolute;width:400px;bottom:-36px;left:-120px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
+              style="height:1060px;width:auto;position:relative;top:70px;z-index:1;">
           </div>
+          <img src="assets/owl-styles.webp" alt=""
+            style="position:absolute;width:520px;bottom:10px;left:560px;z-index:5;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));">
         </div>
 
         <!-- Right: content -->
         <div class="split-right">
-          <div style="max-width:480px;">
+          <div style="max-width:480px;position:relative;top:-140px;">
             <div class="eyebrow"><span class="eyebrow-dash"></span>Custom Styles</div>
             <div class="headline-md">Write for<br>the room.</div>
-            <p class="body-copy">Four built-in styles, or create your own with custom prompts, icons, and colours. Each style has its own thinking level and regional spelling variant.</p>
             <div class="feats">
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Grammar Only, Casual, Neutral &amp; Formal</strong> — instant tone adjustment</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Custom prompts</strong> — tell the AI exactly what to do</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Spelling variants</strong> — British, American, Australian, Canadian, and more</div></div>
-              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Per-style thinking budget</strong> — fast fixes or deep precision, your call</div></div>
+              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Custom prompts</strong><br>tell the AI exactly what to do</div></div>
+              <div class="feat"><div class="feat-dot"></div><div class="feat-text"><strong>Spelling variants</strong><br>British, American, Australian &amp; more</div></div>
             </div>
           </div>
         </div>
@@ -530,44 +550,33 @@
 
 
 <!-- ══════════════════════════════════════════════════════════
-     PROMO TILE SMALL — 440×280 (frame at 450×290)
+     PROMO TILE SMALL A — stacked / centred
      ══════════════════════════════════════════════════════════ -->
 <div class="asset-group" id="p-sm">
-  <div class="asset-label">Small Promo Tile · 450×290 → crop to 440×280</div>
-  <div class="frame-450">
+  <div class="asset-label">Small Promo Tile A · Stacked · 440×280</div>
+  <div class="frame-440">
 
     <div class="bg-base"></div>
     <div class="bg-photo"></div>
-    <div class="glow" style="width:320px;height:320px;background:radial-gradient(circle,rgba(74,158,245,0.25) 0%,transparent 70%);top:-80px;left:-80px;"></div>
+    <div class="glow" style="width:360px;height:360px;background:radial-gradient(circle,rgba(74,158,245,0.22) 0%,transparent 70%);top:-100px;left:50%;transform:translateX(-50%);"></div>
 
-    <div class="inner" style="display:flex;align-items:center;justify-content:center;padding:0 28px;gap:22px;">
-
+    <div class="inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;">
       <img src="assets/icon.webp" alt="Proofreader"
-        style="width:72px;height:72px;border-radius:18px;box-shadow:0 8px 32px rgba(0,0,0,0.55);flex-shrink:0;">
-
-      <div>
-        <div style="font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.025em;margin-bottom:6px;">Proofreader</div>
-        <div style="font-size:12.5px;color:var(--muted);line-height:1.5;width:260px;">AI proofreading that lives in your browser. Your key, your data.</div>
-        <div style="margin-top:13px;display:flex;gap:7px;">
-          <span style="background:rgba(74,158,245,0.12);border:1px solid rgba(74,158,245,0.22);border-radius:100px;padding:4px 11px;font-size:10.5px;color:#9ecaf7;font-weight:500;">Use your own AI</span>
-          <span style="background:rgba(74,158,245,0.12);border:1px solid rgba(74,158,245,0.22);border-radius:100px;padding:4px 11px;font-size:10.5px;color:#9ecaf7;font-weight:500;">Free to use</span>
-        </div>
-      </div>
-
+        style="width:140px;height:140px;border-radius:32px;box-shadow:0 16px 56px rgba(0,0,0,0.65);">
+      <div style="font-size:42px;font-weight:700;color:var(--text);letter-spacing:-0.04em;">Proofreader</div>
     </div>
 
     <div class="accent-line"></div>
   </div>
 </div>
 
-
 <!-- ══════════════════════════════════════════════════════════
      PROMO TILE MARQUEE — 1400×560 (frame at 1410×570)
      Content centred horizontally in the frame.
      ══════════════════════════════════════════════════════════ -->
 <div class="asset-group" id="p-lg">
-  <div class="asset-label">Marquee Promo Tile · 1410×570 → crop to 1400×560</div>
-  <div class="frame-1410">
+  <div class="asset-label">Marquee Promo Tile · 1400×560</div>
+  <div class="frame-1400">
 
     <div class="bg-base"></div>
     <div class="bg-photo"></div>
@@ -618,6 +627,50 @@
   </div>
 </div>
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  function dlBtnHTML() {
+    return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download`
+  }
+
+  function downloadAsset(btn) {
+    const frame = btn.closest("[class^='frame-']")
+    const group = frame.closest(".asset-group")
+    const label = group.querySelector(".asset-label").textContent.trim()
+    const slug = label.split("·")[0].trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")
+    const filename = `${slug}-${frame.offsetWidth}x${frame.offsetHeight}.jpg`
+
+    btn.textContent = "Capturing…"
+
+    html2canvas(frame, {
+      scale: 1,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      width: frame.offsetWidth,
+      height: frame.offsetHeight,
+    }).then((canvas) => {
+      const a = document.createElement("a")
+      a.href = canvas.toDataURL("image/jpeg", 0.95)
+      a.download = filename
+      a.click()
+      btn.innerHTML = dlBtnHTML()
+    }).catch(() => {
+      btn.innerHTML = dlBtnHTML()
+    })
+  }
+
+  document.querySelectorAll(".asset-group").forEach((group) => {
+    const frame = group.querySelector("[class^='frame-']")
+    if (!frame) return
+    const btn = document.createElement("button")
+    btn.className = "dl-btn"
+    btn.innerHTML = dlBtnHTML()
+    btn.addEventListener("click", () => downloadAsset(btn))
+    frame.appendChild(btn)
+  })
+</script>
 
 </body>
 </html>

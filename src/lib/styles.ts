@@ -115,14 +115,14 @@ export const DEFAULT_STYLES: ProofreadStyle[] = [
   {
     name: "Neutral",
     icon: "scale",
-    thinkingByProvider: { gemini: 1024, openai: 1, claude: 1, grok: 0 },
+    thinkingByProvider: { gemini: 0, openai: 0, claude: 0, grok: 0 },
     prompt:
       "Rewrite the following text in a neutral, clear, and balanced tone. Fix any grammar or spelling errors. Avoid being overly casual or overly formal",
   },
   {
     name: "Formal",
     icon: "briefcase",
-    thinkingByProvider: { gemini: 1024, openai: 1, claude: 1, grok: 0 },
+    thinkingByProvider: { gemini: 0, openai: 0, claude: 0, grok: 0 },
     prompt:
       "Rewrite the following text in a formal, polished, professional tone. Fix any grammar or spelling errors.",
   },

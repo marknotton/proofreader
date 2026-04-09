@@ -9,16 +9,13 @@
   "autoOn": "Automatisch nakijken aan",
   "autoOff": "Automatisch nakijken uit",
   "smartMarkdown": "Slimme Markdown",
-
   "error.showRaw": "Toon onbewerkte fout",
   "error.hideRaw": "Verberg onbewerkte fout",
   "error.dismiss": "Sluiten",
-
   "toast.replaced": "Vervangen",
   "toast.couldNotReplace": "Kon tekst niet vervangen",
   "toast.couldNotReachPage": "Kon de pagina niet bereiken om tekst te vervangen",
   "toast.noTextSelected": "Geen tekst geselecteerd",
-
   "settings.title": "Instellingen",
   "settings.provider": "AI-aanbieder",
   "settings.apiKey": "{provider} API-sleutel",
@@ -34,15 +31,12 @@
   "settings.provider.openai": "OpenAI (ChatGPT) — geen gratis API-tier. Vereist facturatiegegevens, maar nakijkkosten zijn verwaarloosbaar.",
   "settings.provider.claude": "Anthropic (Claude) — geen gratis API-tier. Vereist de aankoop van prepaid credits. De werkelijke nakijkkosten zijn erg laag.",
   "settings.provider.grok": "xAI (Grok) — kan promotiecredits bieden voor nieuwe accounts. Controleer hun site voor actuele aanbiedingen. Nakijkkosten zijn erg laag.",
-
   "settings.theme": "Thema",
   "settings.theme.light": "Licht",
   "settings.theme.dark": "Donker",
   "settings.theme.auto": "Auto",
-
   "settings.contextMenu": "Rechtsklikmenu",
   "settings.contextMenuDesc": "Toon nakijkopties in het contextmenu",
-
   "settings.autoShow": "Knop automatisch nakijken",
   "settings.autoShowDesc": "Toon de knop voor automatisch nakijken op de hoofdpagina",
   "settings.autoPaste": "Auto bij plakken",
@@ -51,23 +45,18 @@
   "settings.autoTypeDesc": "Nakijken na een pauze tijdens het typen",
   "settings.autoDelay": "Vertraging",
   "settings.autoWarning": "Automatisch nakijken tijdens het typen gebruikt meer tokens en kan je API-kosten verhogen. Gebruik een redelijke vertraging.",
-
   "settings.manageStyles": "Stijlen beheren",
-
   "settings.donation.intro": "Hallo, ik ben {name} — een ontwikkelaar uit het Verenigd Koninkrijk. Ik heb deze extensie voor mezelf gebouwd en dacht dat anderen er ook baat bij konden hebben.",
   "settings.donation.ask": "Als het je een paar minuten heeft bespaard, zou een koffie mijn dag maken.",
   "settings.donation.button": "Trakteer me op een koffie",
   "settings.donation.hide": "Verbergen op de hoofdpagina",
-
   "settings.about": "Over Proofreader",
   "settings.about.p1": "Bedankt voor het gebruik van Proofreader! Dit is een gratis open-source project dat in mijn vrije tijd wordt ontwikkeld en onderhouden. Geen advertenties, geen tracking, geen gegevensverzameling — gewoon een eenvoudig hulpmiddel dat één ding goed doet.",
   "settings.about.p2": "Als je problemen tegenkomt, ideeën voor functies hebt of wilt bijdragen, staat het project op GitHub. Bugrapporten, pull requests en feedback zijn welkom.",
   "settings.about.link": "github.com/marknotton/proofreader",
-
   "settings.language": "Taal",
   "settings.languageNote": "Vertalingen zijn gemaakt met AI en zijn mogelijk niet volledig nauwkeurig.",
   "settings.languageContribute": "Bijdragen aan vertalingen op GitHub",
-
   "thinking.low": "Laag",
   "thinking.medium": "Gemiddeld",
   "thinking.high": "Hoog",
@@ -76,7 +65,6 @@
   "thinking.fastest": "Snelst",
   "thinking.balanced": "Gebalanceerd",
   "thinking.thorough": "Grondig",
-
   "styles.title": "Stijlen beheren",
   "styles.addStyle": "Stijl toevoegen",
   "styles.export": "Exporteren",
@@ -95,7 +83,6 @@
   "styles.noStyles": "Het bestand bevatte geen stijlen.",
   "styles.reorder": "Herordenen",
   "styles.reorderDone": "Klaar",
-
   "form.addTitle": "Stijl toevoegen",
   "form.editTitle": "Stijl bewerken",
   "form.name": "Naam",
@@ -117,16 +104,13 @@
   "form.errorName": "Naam is verplicht",
   "form.errorPrompt": "Instructie is verplicht",
   "form.errorDuplicate": "Er bestaat al een stijl met deze naam",
-
   "toast.perfect1": "Geen wijzigingen nodig — ziet er goed uit!",
   "toast.perfect2": "Al perfect.",
   "toast.perfect3": "Niets te corrigeren hier!",
   "toast.perfect4": "Perfect — geen bewerkingen nodig.",
   "toast.perfect5": "Brandschoon.",
-
   "settings.celebrate": "Perfecte resultaat vieringen",
   "settings.celebrateDesc": "Toon een kleine viering wanneer je tekst geen wijzigingen nodig heeft",
-
   "demo.title": "Probeer het — {limit} voorbeeldverzoeken inbegrepen",
   "demo.description": "Deze voorbeelden gebruiken een gedeelde API-sleutel zodat je kunt zien hoe Proofreader werkt. Het is iets trager dan met je eigen sleutel. Proofreader is volledig gratis — voeg gewoon je eigen API-sleutel toe voor de volledige ervaring.",
   "demo.remaining": "{used} van {limit} voorbeeldverzoeken gebruikt",
@@ -135,7 +119,6 @@
   "demo.limitReachedDesc": "Voeg je eigen API-sleutel toe om Proofreader te blijven gebruiken — het is volledig gratis. Je hebt alleen een sleutel nodig van een ondersteunde provider.",
   "demo.connectProvider": "Voeg een API-sleutel toe om te beginnen",
   "demo.connectProviderDesc": "Proofreader is gratis en open source. Voeg gewoon een API-sleutel toe van Gemini, OpenAI, Anthropic of xAI. Je sleutel blijft op je apparaat — er wordt niets elders naartoe gestuurd.",
-
   "history.title": "Geschiedenis",
   "history.empty": "Nog geen geschiedenis. Je correctiesessies verschijnen hier.",
   "history.search": "Zoek in geschiedenis…",
@@ -154,8 +137,16 @@
   "history.disableWillClear": "Je hebt {count} opgeslagen items. Het uitschakelen van geschiedenis zal ze permanent verwijderen.",
   "history.disableAndClear": "Uitschakelen & wissen",
   "history.justDisable": "Alleen uitschakelen",
-
   "incognito.enable": "Incognitomodus — deze sessie wordt niet opgeslagen",
   "incognito.disable": "Incognito uitschakelen",
-  "incognito.active": "Incognitomodus — deze sessie wordt niet in de geschiedenis opgeslagen"
+  "incognito.active": "Incognitomodus — deze sessie wordt niet in de geschiedenis opgeslagen",
+  "antiAi.title": "Anti-AI-detectie",
+  "antiAi.enable": "Uitvoer humaniseren",
+  "antiAi.enableDesc": "Maak resultaten menselijker voor AI-detectoren",
+  "antiAi.desc": "AI-detectoren signaleren patronen die veel voorkomen in door machines gegenereerde tekst — perfecte grammatica, formele bewoordingen, onwankelbare zekerheid. Deze functie zorgt ervoor dat de uitvoer meer klinkt alsof een echte persoon het heeft geschreven: informele woordwisselingen, kleine slips en verzachte beweringen. Niets hier verandert de betekenis, alleen hoe het voor een detector aanvoelt.",
+  "antiAi.frequency": "Foutfrequentie",
+  "antiAi.types": "Humanisatietypen",
+  "antiAi.weight": "Gewicht",
+  "antiAi.includeErrors": "Fouten opnemen",
+  "antiAi.includeErrorsDesc": "Subtiele fouten invoegen — dubbele spaties, a/an-fouten, herhaalde woorden en meer"
 }
