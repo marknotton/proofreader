@@ -31,7 +31,7 @@ No app switching. No copying text into a chat window. No AI trying to have a con
 
 ---
 
-## Your AI, your rules
+## 🔑 Your AI, your rules
 
 <img src="src/assets/owl-ai.webp" alt="AI Providers" width="120" align="right">
 
@@ -50,7 +50,7 @@ Switch between providers at any time. Each one keeps its own API key.
 
 ---
 
-## Styles
+## 🎨 Styles
 
 <img src="src/assets/owl-styles.webp" alt="Styles" width="180" align="right">
 
@@ -73,10 +73,27 @@ Each style has its own prompt, tone, and thinking level. Four are built in, and 
 - Colour and icon for quick recognition
 - Smart Markdown rendering (with copy buttons for code blocks)
 - Per-provider thinking levels
+- Regional spelling variants (British, American, Australian, and more)
 
 ---
 
-## Thinking controls
+## 🕵️ Anti-AI Detection
+
+### Fool the detector. Keep the meaning.
+
+AI detectors flag patterns common in machine-generated text — perfect grammar, formal phrasing, unwavering certainty. The humanisation feature nudges output to read more like a real person wrote it.
+
+- **Phrasing swaps** — Replaces AI-isms with more natural alternatives
+- **Hedging** — Softens overly confident assertions
+- **Error injection** — Optional subtle mistakes: double spaces, a/an slips, repeated words, and more
+- **Per-type toggles** — Enable only the adjustments you want
+- **Word-count thresholds** — Controls how often errors appear relative to text length
+
+Nothing changes the meaning — just how it reads to a detector.
+
+---
+
+## ⚡ Thinking controls
 
 ### Fast when you need speed. Deep when you need precision.
 
@@ -90,7 +107,7 @@ You can also override thinking per session without changing your saved styles.
 
 ---
 
-## Auto-proofread
+## ⚙️ Auto-proofread
 
 ### Set it and forget it
 
@@ -103,7 +120,7 @@ Proofreader can run automatically in the background.
 
 ---
 
-## History
+## 📋 History
 
 ### Every session, one click away
 
@@ -116,7 +133,7 @@ When history is enabled, Proofreader saves a log of every proofread session — 
 
 ---
 
-## Incognito Mode
+## 🥷 Incognito Mode
 
 ### Off the record, when you need it
 
@@ -128,7 +145,18 @@ Flip on Incognito Mode for sessions you don't want saved. The UI shifts to a nea
 
 ---
 
-## Context menu
+## 💾 Backup & Restore
+
+### Take your setup anywhere
+
+Export everything — settings, styles, API keys, history — to a single JSON file. Import it on another browser or device and pick up exactly where you left off.
+
+- Choose whether to include API keys and history before exporting
+- Full restore on import: all preferences, styles, and provider settings
+
+---
+
+## 🖱️ Context menu
 
 ### Right-click. Done.
 
@@ -138,7 +166,13 @@ Enable the context menu and choose a style directly from the right-click menu. R
 
 ---
 
-## Languages
+## ⌨️ Keyboard shortcut
+
+Open and close the panel without touching your mouse. The default shortcut is `Alt+Shift+P` and can be remapped at `chrome://extensions/shortcuts`.
+
+---
+
+## 🌍 Languages
 
 <img src="src/assets/owl-lanuages.webp" alt="Languages" width="100" align="right">
 
@@ -146,7 +180,7 @@ The interface is available in seven languages: English, French, Spanish, Italian
 
 ---
 
-## Settings
+## 🔧 Settings
 
 <img src="src/assets/owl-settings.webp" alt="Settings" width="100" align="right">
 
@@ -170,7 +204,7 @@ Proofreader itself is completely free and open source. To use it properly, just 
 
 ---
 
-## Privacy
+## 🔒 Privacy
 
 ### Your text goes to the AI. Nowhere else.
 
