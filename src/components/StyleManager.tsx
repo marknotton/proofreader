@@ -15,9 +15,6 @@ import {
   type ProofreadStyle,
   type SpellingLocale,
   SPELLING_LOCALES,
-  exportStylesJSON,
-  parseImportedStyles,
-  mergeStyles,
 } from "../lib/styles"
 import {
   type ProviderId,
@@ -35,8 +32,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Download,
-  Upload,
   ChevronLeft,
   ChevronDown,
   Save,
@@ -67,7 +62,6 @@ type View =
   | { kind: "list" }
   | { kind: "edit"; index: number; style: ProofreadStyle; isNew: boolean }
   | { kind: "confirmDelete"; index: number; style: ProofreadStyle }
-  | { kind: "confirmImport"; incoming: ProofreadStyle[]; matchCount: number; newCount: number }
 
 /**
  * Style management interface for creating, editing, and organizing proofread styles.
@@ -82,9 +76,7 @@ type View =
 export default function StyleManager({ styles, onChange, onBack }: StyleManagerProps) {
   const { t } = useI18n()
   const [view, setView] = useState<View>({ kind: "list" })
-  const [importError, setImportError] = useState<string | null>(null)
   const [reordering, setReordering] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const dragIndexRef = useRef<number>(-1)
   const dragOverIndexRef = useRef<number>(-1)
 
@@ -164,68 +156,6 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
     [styles, onChange]
   )
 
-  // ── Export ──
-
-  const handleExport = useCallback(() => {
-    const json = exportStylesJSON(styles)
-    const blob = new Blob([json], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "proofreader-styles.json"
-    a.click()
-    URL.revokeObjectURL(url)
-  }, [styles])
-
-  // ── Import ──
-
-  const handleImportClick = useCallback(() => {
-    setImportError(null)
-    fileInputRef.current?.click()
-  }, [])
-
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (!file) return
-      e.target.value = ""
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        try {
-          const incoming = parseImportedStyles(reader.result as string)
-          if (incoming.length === 0) {
-            setImportError(t("styles.noStyles"))
-            return
-          }
-
-          let matchCount = 0
-          let newCount = 0
-          for (const s of incoming) {
-            const exists = styles.some(
-              (e) => e.name.toLowerCase() === s.name.toLowerCase()
-            )
-            if (exists) matchCount++
-            else newCount++
-          }
-
-          setView({ kind: "confirmImport", incoming, matchCount, newCount })
-        } catch (err) {
-          setImportError(err instanceof Error ? err.message : "Invalid JSON file")
-        }
-      }
-      reader.readAsText(file)
-    },
-    [styles]
-  )
-
-  const handleConfirmImport = useCallback(() => {
-    if (view.kind !== "confirmImport") return
-    const merged = mergeStyles(styles, view.incoming)
-    onChange(merged)
-    setView({ kind: "list" })
-  }, [view, styles, onChange])
-
   // ── Renders ──
 
   // Confirm delete dialog
@@ -246,45 +176,6 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
             onClick={handleConfirmDelete}
           >
             {t("styles.deleteButton")}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => setView({ kind: "list" })}
-          >
-            {t("styles.cancel")}
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  // Confirm import dialog
-  if (view.kind === "confirmImport") {
-    return (
-      <div className="flex flex-col gap-4 p-4">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-yellow-500" />
-          <h3 className="font-semibold">{t("styles.importHeading")}</h3>
-        </div>
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p>
-            {t("styles.importCount", { count: view.incoming.length, plural: view.incoming.length !== 1 ? "s" : "" })}
-          </p>
-          {view.newCount > 0 && (
-            <p>
-              &bull; {t("styles.importNew", { count: view.newCount, plural: view.newCount !== 1 ? "s" : "" })}
-            </p>
-          )}
-          {view.matchCount > 0 && (
-            <p>
-              &bull; {t("styles.importOverwrite", { count: view.matchCount, plural: view.matchCount !== 1 ? "s" : "" })}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button className="flex-1" onClick={handleConfirmImport}>
-            {t("styles.importButton")}
           </Button>
           <Button
             variant="outline"
@@ -340,6 +231,13 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
         {styles.map((style, i) => {
           const IconComp = getIconComponent(style.icon)
           const colorHex = getColorValue(style.color)
+          const promptSnippet = style.prompt.length > 80 ? style.prompt.slice(0, 80).trimEnd() + "…" : style.prompt
+          const localeName = style.spellingLocale && style.spellingLocale !== "none"
+            ? SPELLING_LOCALES.find((l) => l.key === style.spellingLocale)?.label?.replace(" English", "")
+            : null
+          const tags: string[] = []
+          if (localeName) tags.push(localeName)
+          if (style.markdown) tags.push("MD")
           return (
             <div
               key={`${style.name}-${i}`}
@@ -348,29 +246,39 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
               onDragOver={reordering ? (e) => handleDragOver(e, i) : undefined}
               onDrop={reordering ? (e) => handleDrop(e, i) : undefined}
               onClick={!reordering ? () => handleEdit(i) : undefined}
-              className={`flex items-center gap-2 rounded-md border border-input px-3 py-2 transition-colors ${reordering ? "cursor-grab active:cursor-grabbing" : "cursor-pointer hover:bg-accent/50"}`}
+              className={`flex items-start gap-2 rounded-md border border-input px-3 py-2 transition-colors ${reordering ? "cursor-grab active:cursor-grabbing" : "cursor-pointer hover:bg-accent/50"}`}
             >
               {reordering ? (
-                <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground mt-0.5" />
               ) : (
                 <>
                   {IconComp && (
                     <IconComp
-                      className="h-3.5 w-3.5 shrink-0"
+                      className="h-3.5 w-3.5 shrink-0 mt-0.5"
                       style={colorHex ? { color: colorHex } : undefined}
                     />
                   )}
                   {!IconComp && colorHex && (
                     <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      className="h-2.5 w-2.5 rounded-full shrink-0 mt-1"
                       style={{ backgroundColor: colorHex }}
                     />
                   )}
                 </>
               )}
-              <span className="flex-1 text-sm truncate">{style.name}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm truncate block">{style.name}</span>
+                <p className="text-[11px] text-muted-foreground/60 leading-snug truncate mt-0.5">{promptSnippet}</p>
+                {tags.length > 0 && (
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    {tags.map((tag) => (
+                      <span key={tag} className="text-[9px] font-medium uppercase tracking-wide bg-muted text-muted-foreground px-1 py-0.5 rounded">{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
               {!reordering && (
-                <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+                <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 mt-0.5" />
               )}
             </div>
           )
@@ -382,26 +290,6 @@ export default function StyleManager({ styles, onChange, onBack }: StyleManagerP
           <Plus className="h-3.5 w-3.5" />
           {t("styles.addStyle")}
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1" onClick={handleExport}>
-            <Download className="h-3.5 w-3.5" />
-            {t("styles.export")}
-          </Button>
-          <Button variant="outline" size="sm" className="flex-1" onClick={handleImportClick}>
-            <Upload className="h-3.5 w-3.5" />
-            {t("styles.import")}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </div>
-        {importError && (
-          <p className="text-xs text-destructive">{importError}</p>
-        )}
       </div>
     </div>
   )

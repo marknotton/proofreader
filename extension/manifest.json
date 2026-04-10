@@ -34,6 +34,14 @@
       "run_at": "document_idle"
     }
   ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+P"
+      },
+      "description": "Toggle Proofreader"
+    }
+  },
   "permissions": [
     "sidePanel",
     "contextMenus",

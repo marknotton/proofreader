@@ -21,6 +21,7 @@ import {
   setProviderKey,
   getActiveProvider,
   setActiveProvider as persistProvider,
+  providerKeyStorageKey,
 } from "./lib/providers"
 import { proofread } from "./lib/proofread"
 import { DEMO_ENABLED, getDemoUsed, getDemoLimit, hasDemoRemaining, demoProofread } from "./lib/demo"
@@ -36,7 +37,7 @@ import {
 import { type SanitisedError, sanitiseError } from "./lib/errors"
 import { humaniseText, type AntiAiConfig, DEFAULT_ANTI_AI_CONFIG, ERROR_LABELS, ERROR_TYPE_KEYS, PHRASING_TYPE_KEYS } from "./lib/humanise"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2, History, ChevronRight, EyeOff, Search, Fingerprint } from "lucide-react"
+import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2, History, ChevronRight, EyeOff, Search, Fingerprint, Download, Upload } from "lucide-react"
 import { useI18n } from "./context/I18nContext"
 import { LOCALE_IDS, LOCALE_NAMES, type Locale } from "./lib/i18n"
 
@@ -102,6 +103,13 @@ export default function App() {
   const [showHistoryDisableConfirm, setShowHistoryDisableConfirm] = useState(false)
   const [historySearch, setHistorySearch] = useState("")
   const [incognito, setIncognito] = useState(false)
+
+  // ── Backup dialog state ──
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [exportIncludeKeys, setExportIncludeKeys] = useState(false)
+  const [exportIncludeHistory, setExportIncludeHistory] = useState(true)
+  const backupFileInputRef = useRef<HTMLInputElement>(null)
+  const [importMessage, setImportMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   // ── Anti-AI Detection state ──
   const [antiAiConfig, setAntiAiConfig] = useState<AntiAiConfig>(() => {
@@ -602,6 +610,129 @@ export default function App() {
       return next
     })
   }, [])
+
+  // ── Backup export ──
+  const handleExportBackup = useCallback(() => {
+    const backup: Record<string, any> = {
+      _version: 1,
+      _exportedAt: new Date().toISOString(),
+      settings: {
+        provider: localStorage.getItem("proofreader_provider"),
+        theme: localStorage.getItem(THEME_KEY),
+        locale: localStorage.getItem("proofreader_locale"),
+        celebrate: localStorage.getItem(CELEBRATE_KEY),
+        hideDonation: localStorage.getItem(HIDE_DONATION_KEY),
+        autoShow: localStorage.getItem(AUTO_SHOW_KEY),
+        autoEnabled: localStorage.getItem(AUTO_ENABLED_KEY),
+        autoPaste: localStorage.getItem(AUTO_PASTE_KEY),
+        autoType: localStorage.getItem(AUTO_TYPE_KEY),
+        autoDelay: localStorage.getItem(AUTO_DELAY_KEY),
+        historyEnabled: localStorage.getItem("proofreader_history_enabled"),
+        antiAi: localStorage.getItem(ANTI_AI_KEY),
+      },
+      styles: styles,
+    }
+    if (exportIncludeKeys) {
+      backup.apiKeys = {} as Record<string, string>
+      for (const id of PROVIDER_IDS) {
+        const key = localStorage.getItem(providerKeyStorageKey(id))
+        if (key) (backup.apiKeys as Record<string, string>)[id] = key
+      }
+    }
+    if (exportIncludeHistory) {
+      backup.history = loadHistory()
+    }
+    const json = JSON.stringify(backup, null, 2)
+    const blob = new Blob([json], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `proofreader-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    setShowExportDialog(false)
+  }, [styles, exportIncludeKeys, exportIncludeHistory])
+
+  // ── Backup import ──
+  const handleImportBackup = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string)
+        if (!data._version || !data.settings) {
+          setImportMessage({ type: "error", text: "Invalid backup file" })
+          return
+        }
+        // Restore settings
+        const s = data.settings
+        const settingsMap: Record<string, string | null> = {
+          proofreader_provider: s.provider,
+          [THEME_KEY]: s.theme,
+          proofreader_locale: s.locale,
+          [CELEBRATE_KEY]: s.celebrate,
+          [HIDE_DONATION_KEY]: s.hideDonation,
+          [AUTO_SHOW_KEY]: s.autoShow,
+          [AUTO_ENABLED_KEY]: s.autoEnabled,
+          [AUTO_PASTE_KEY]: s.autoPaste,
+          [AUTO_TYPE_KEY]: s.autoType,
+          [AUTO_DELAY_KEY]: s.autoDelay,
+          proofreader_history_enabled: s.historyEnabled,
+          [ANTI_AI_KEY]: s.antiAi,
+        }
+        for (const [key, val] of Object.entries(settingsMap)) {
+          if (val != null) localStorage.setItem(key, val)
+        }
+        // Restore styles
+        if (Array.isArray(data.styles) && data.styles.length > 0) {
+          saveStyles(data.styles)
+          setStyles(data.styles)
+        }
+        // Restore API keys
+        if (data.apiKeys && typeof data.apiKeys === "object") {
+          for (const [id, key] of Object.entries(data.apiKeys)) {
+            if (typeof key === "string" && key) {
+              localStorage.setItem(providerKeyStorageKey(id as ProviderId), key)
+            }
+          }
+          setApiKey(getProviderKey(getActiveProvider()))
+        }
+        // Restore history
+        if (Array.isArray(data.history)) {
+          localStorage.setItem("proofreader_history", JSON.stringify(data.history))
+          setHistory(data.history)
+        }
+        // Sync UI state from restored values
+        if (s.theme) { setTheme(s.theme as Theme); applyTheme(s.theme as Theme) }
+        if (s.celebrate != null) setCelebrateEnabled(s.celebrate !== "false")
+        if (s.hideDonation != null) setHideDonation(s.hideDonation === "true")
+        if (s.autoShow != null) setAutoShow(s.autoShow !== "false")
+        if (s.autoEnabled != null) setAutoEnabled(s.autoEnabled === "true")
+        if (s.autoPaste != null) setAutoPaste(s.autoPaste !== "false")
+        if (s.autoType != null) setAutoType(s.autoType === "true")
+        if (s.autoDelay != null) setAutoDelay(Math.max(1, Math.min(30, Number(s.autoDelay))))
+        if (s.historyEnabled != null) setHistoryEnabledState(s.historyEnabled !== "false")
+        if (s.antiAi) {
+          try {
+            const parsed = JSON.parse(s.antiAi)
+            setAntiAiConfig({ ...DEFAULT_ANTI_AI_CONFIG, ...parsed, errors: { ...DEFAULT_ANTI_AI_CONFIG.errors, ...(parsed.errors ?? {}) } })
+          } catch {}
+        }
+        if (s.provider && PROVIDERS[s.provider as ProviderId]) {
+          setProvider(s.provider as ProviderId)
+        }
+        if (s.locale) changeLocale(s.locale as Locale)
+        setImportMessage({ type: "success", text: "Backup restored successfully" })
+        setTimeout(() => setImportMessage(null), 3000)
+      } catch {
+        setImportMessage({ type: "error", text: "Could not read backup file" })
+        setTimeout(() => setImportMessage(null), 3000)
+      }
+    }
+    reader.readAsText(file)
+  }, [changeLocale])
 
   const handleSubmit = useCallback(() => {
     lastProofreadTextRef.current = input
@@ -1438,6 +1569,63 @@ export default function App() {
               {t("settings.manageStyles")}
             </Button>
           </div>
+
+          {/* Backup */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Backup</p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => { setExportIncludeKeys(false); setExportIncludeHistory(true); setShowExportDialog(true) }}>
+                <Download className="h-3.5 w-3.5" />
+                Export
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => backupFileInputRef.current?.click()}>
+                <Upload className="h-3.5 w-3.5" />
+                Import
+              </Button>
+              <input ref={backupFileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportBackup} />
+            </div>
+            {importMessage && (
+              <p className={`text-xs ${importMessage.type === "success" ? "text-green-500" : "text-destructive"}`}>{importMessage.text}</p>
+            )}
+            <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+              Export all settings, styles, and preferences to a file. Import to restore on another device or browser.
+            </p>
+          </div>
+
+          {/* Export dialog */}
+          {showExportDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowExportDialog(false)}>
+              <div className="bg-background border border-input rounded-lg shadow-lg w-[280px] p-4 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm">Export Backup</h3>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowExportDialog(false)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs text-muted-foreground">Settings and styles are always included.</p>
+                  <label className="flex items-center justify-between gap-3 cursor-pointer">
+                    <div>
+                      <p className="text-sm">Include API keys</p>
+                      <p className="text-[11px] text-muted-foreground">Keys will be stored in plain text</p>
+                    </div>
+                    <Switch checked={exportIncludeKeys} onCheckedChange={setExportIncludeKeys} />
+                  </label>
+                  <label className="flex items-center justify-between gap-3 cursor-pointer">
+                    <div>
+                      <p className="text-sm">Include history</p>
+                      <p className="text-[11px] text-muted-foreground">{history.length} item{history.length !== 1 ? "s" : ""}</p>
+                    </div>
+                    <Switch checked={exportIncludeHistory} onCheckedChange={setExportIncludeHistory} />
+                  </label>
+                </div>
+                <Button size="sm" onClick={handleExportBackup}>
+                  <Download className="h-3.5 w-3.5" />
+                  Export
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Support */}
           <div className="flex flex-col gap-3">
