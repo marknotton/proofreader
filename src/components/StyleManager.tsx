@@ -29,6 +29,13 @@ import {
   getColorValue,
 } from "../lib/style-options"
 import {
+  type AntiAiConfig,
+  DEFAULT_ANTI_AI_CONFIG,
+  ERROR_LABELS,
+  ERROR_TYPE_KEYS,
+  PHRASING_TYPE_KEYS,
+} from "../lib/humanise"
+import {
   Plus,
   Pencil,
   Trash2,
@@ -39,6 +46,8 @@ import {
   AlertTriangle,
   Ban,
   GripVertical,
+  Fingerprint,
+  ChevronRight,
 } from "lucide-react"
 
 /**
@@ -327,6 +336,7 @@ interface StyleFormProps {
  */
 function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }: StyleFormProps) {
   const { t } = useI18n()
+  const [subView, setSubView] = useState<"form" | "anti-ai">("form")
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [name, setName] = useState(initial.name)
   const [prompt, setPrompt] = useState(initial.prompt)
@@ -337,12 +347,26 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }
   )
   const [markdown, setMarkdown] = useState(initial.markdown ?? false)
   const [spellingLocale, setSpellingLocale] = useState<SpellingLocale>(initial.spellingLocale ?? "none")
+  const [antiAi, setAntiAi] = useState<AntiAiConfig>(() => {
+    const saved = initial.antiAi
+    if (!saved) return DEFAULT_ANTI_AI_CONFIG
+    return {
+      ...DEFAULT_ANTI_AI_CONFIG,
+      ...saved,
+      errors: { ...DEFAULT_ANTI_AI_CONFIG.errors, ...(saved.errors ?? {}) },
+      thresholds: saved.thresholds ?? DEFAULT_ANTI_AI_CONFIG.thresholds,
+    }
+  })
   const [showIcons, setShowIcons] = useState(false)
   const [showColors, setShowColors] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const updateThinking = useCallback((provider: ProviderId, value: number) => {
     setThinkingByProvider((prev) => ({ ...prev, [provider]: value }))
+  }, [])
+
+  const handleAntiAiChange = useCallback((updater: (prev: AntiAiConfig) => AntiAiConfig) => {
+    setAntiAi((prev) => updater(prev))
   }, [])
 
   const handleSave = useCallback(() => {
@@ -367,13 +391,161 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }
       color,
       markdown,
       spellingLocale,
+      antiAi,
     })
-  }, [name, prompt, thinkingByProvider, icon, color, markdown, spellingLocale, existingNames, onSave])
+  }, [name, prompt, thinkingByProvider, icon, color, markdown, spellingLocale, antiAi, existingNames, onSave])
 
   const geminiLabel = (v: number) =>
     v === 0 ? t("thinking.off") : v <= 1024 ? t("thinking.fast") : v <= 4096 ? t("thinking.balanced") : t("thinking.thorough")
 
   const effortLabels = [t("thinking.low"), t("thinking.medium"), t("thinking.high")]
+
+  // ── Anti-AI sub-view ──
+  if (subView === "anti-ai") {
+    return (
+      <div className="flex flex-col h-full bg-background text-foreground">
+        <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-border shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setSubView("form")} className="shrink-0">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Fingerprint className="h-4 w-4 text-muted-foreground shrink-0" />
+          <h2 className="text-sm font-semibold flex-1">{t("antiAi.title")}</h2>
+          <Switch
+            checked={antiAi.enabled}
+            onCheckedChange={(v) => handleAntiAiChange((p) => ({ ...p, enabled: v }))}
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-4 p-3">
+
+            <p className="text-xs text-muted-foreground leading-relaxed">{t("antiAi.desc")}</p>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("antiAi.types")}</p>
+              <div className={`rounded-lg border border-input bg-card flex flex-col divide-y divide-border transition-opacity ${!antiAi.enabled ? "opacity-40 pointer-events-none" : ""}`}>
+
+                {PHRASING_TYPE_KEYS.map((key) => {
+                  const err = antiAi.errors[key]
+                  const meta = ERROR_LABELS[key]
+                  return (
+                    <div key={key} className="flex flex-col gap-2 px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium">{meta.label}</p>
+                          <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{meta.desc}</p>
+                        </div>
+                        <Switch
+                          checked={err.enabled}
+                          onCheckedChange={(v) => handleAntiAiChange((p) => ({
+                            ...p, errors: { ...p.errors, [key]: { ...p.errors[key], enabled: v } },
+                          }))}
+                        />
+                      </div>
+                      {err.enabled && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-muted-foreground shrink-0 w-10">{t("antiAi.weight")}</span>
+                          <input
+                            type="range" min={1} max={5} step={1}
+                            value={err.weight}
+                            onChange={(e) => handleAntiAiChange((p) => ({
+                              ...p, errors: { ...p.errors, [key]: { ...p.errors[key], weight: Number(e.target.value) } },
+                            }))}
+                            className="flex-1 h-1.5 accent-primary"
+                          />
+                          <span className="text-[11px] text-muted-foreground w-3 text-right tabular-nums">{err.weight}</span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+
+                <div className="flex flex-col">
+                  <div className="flex items-start justify-between gap-3 px-3 py-2.5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">{t("antiAi.includeErrors")}</p>
+                      <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{t("antiAi.includeErrorsDesc")}</p>
+                    </div>
+                    <Switch
+                      checked={antiAi.includeErrors}
+                      onCheckedChange={(v) => handleAntiAiChange((p) => ({ ...p, includeErrors: v }))}
+                    />
+                  </div>
+
+                  {antiAi.includeErrors && (
+                    <div className="border-t border-border flex flex-col">
+                      <div className="px-3 py-2.5 flex flex-col gap-2 border-b border-border bg-muted/20">
+                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("antiAi.frequency")}</p>
+                        {antiAi.thresholds.map((threshold, i) => {
+                          const label = threshold.minWords === 0
+                            ? `< ${threshold.maxWords} words`
+                            : threshold.maxWords >= 9999
+                              ? `${threshold.minWords}+ words`
+                              : `${threshold.minWords}–${threshold.maxWords} words`
+                          return (
+                            <div key={i} className="flex items-center gap-2.5">
+                              <span className="text-[11px] text-muted-foreground w-24 shrink-0">{label}</span>
+                              <input
+                                type="range" min={0} max={10} step={1}
+                                value={threshold.count}
+                                onChange={(e) => handleAntiAiChange((p) => ({
+                                  ...p,
+                                  thresholds: p.thresholds.map((th, j) => j === i ? { ...th, count: Number(e.target.value) } : th),
+                                }))}
+                                className="flex-1 h-1.5 accent-primary"
+                              />
+                              <span className="text-[11px] text-muted-foreground w-4 text-right tabular-nums">{threshold.count}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {ERROR_TYPE_KEYS.map((key) => {
+                        const err = antiAi.errors[key]
+                        const meta = ERROR_LABELS[key]
+                        return (
+                          <div key={key} className="flex flex-col gap-2 px-3 py-2.5 border-b border-border last:border-b-0">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium">{meta.label}</p>
+                                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{meta.desc}</p>
+                              </div>
+                              <Switch
+                                checked={err.enabled}
+                                onCheckedChange={(v) => handleAntiAiChange((p) => ({
+                                  ...p, errors: { ...p.errors, [key]: { ...p.errors[key], enabled: v } },
+                                }))}
+                              />
+                            </div>
+                            {err.enabled && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] text-muted-foreground shrink-0 w-10">{t("antiAi.weight")}</span>
+                                <input
+                                  type="range" min={1} max={5} step={1}
+                                  value={err.weight}
+                                  onChange={(e) => handleAntiAiChange((p) => ({
+                                    ...p, errors: { ...p.errors, [key]: { ...p.errors[key], weight: Number(e.target.value) } },
+                                  }))}
+                                  className="flex-1 h-1.5 accent-primary"
+                                />
+                                <span className="text-[11px] text-muted-foreground w-3 text-right tabular-nums">{err.weight}</span>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -512,6 +684,29 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }
           <Switch checked={markdown} onCheckedChange={setMarkdown} />
         </label>
 
+        {/* Anti-AI Detection */}
+        <button
+          onClick={() => setSubView("anti-ai")}
+          className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-3 py-2.5 text-sm hover:bg-accent/50 transition-colors text-left"
+        >
+          <div className="flex items-center gap-2.5">
+            <Fingerprint className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-xs font-medium flex items-center gap-1.5">
+                {t("antiAi.title")}
+                <span className="text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Beta</span>
+              </p>
+              <p className="text-[11px] text-muted-foreground">{t("antiAi.enableDesc")}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {antiAi.enabled && (
+              <span className="text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">On</span>
+            )}
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+        </button>
+
         {/* Thinking budgets */}
         <div className="flex flex-col gap-1.5">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("form.thinking")}</p>
@@ -519,7 +714,15 @@ function StyleForm({ initial, isNew, existingNames, onSave, onCancel, onDelete }
             <p className="text-[10px] text-muted-foreground leading-relaxed">{t("form.thinkingDesc")}</p>
             {PROVIDER_IDS.map((id) => {
               const cfg = PROVIDERS[id].thinking
-              if (!cfg.supported || cfg.type === "none") return null
+              // Grok (and any future unsupported provider): show a notice row
+              if (!cfg.supported || cfg.type === "none") {
+                return (
+                  <div key={id} className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground">{PROVIDERS[id].label}</span>
+                    <span className="text-[10px] text-muted-foreground italic">Thinking budgets not supported</span>
+                  </div>
+                )
+              }
               const val = thinkingByProvider[id] ?? cfg.default
               if (cfg.type === "effort") {
                 const labels = cfg.effortLabels || effortLabels

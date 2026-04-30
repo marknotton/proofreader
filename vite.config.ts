@@ -1,6 +1,8 @@
-import { defineConfig } from "vite"
+import { defineConfig, type Plugin } from "vite"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
+import { readdirSync, rmSync, statSync } from "fs"
+import { join } from "path"
 
 /** Returns a human-readable build period like "early 2026" or "late 2025" */
 function getBuildPeriod(): string {
@@ -11,8 +13,30 @@ function getBuildPeriod(): string {
   return `${period} ${year}`
 }
 
+/** Recursively delete macOS .DS_Store files from the output directory */
+function cleanDsStore(): Plugin {
+  return {
+    name: "clean-ds-store",
+    closeBundle() {
+      const deleteIn = (dir: string) => {
+        try {
+          for (const entry of readdirSync(dir)) {
+            const full = join(dir, entry)
+            if (entry === ".DS_Store") {
+              rmSync(full, { force: true })
+            } else if (statSync(full).isDirectory()) {
+              deleteIn(full)
+            }
+          }
+        } catch {}
+      }
+      deleteIn("extension")
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), cleanDsStore()],
   base: "./",
   define: {
     __BUILD_PERIOD__: JSON.stringify(getBuildPeriod()),

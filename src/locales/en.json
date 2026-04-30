@@ -18,6 +18,8 @@
   "toast.couldNotReplace": "Could not replace text",
   "toast.couldNotReachPage": "Could not reach the page to replace text",
   "toast.noTextSelected": "No text selected",
+  "toast.autoCopied": "Copied to clipboard",
+  "toast.autoPaste": "Auto-proofreading...",
 
   "settings.title": "Settings",
   "settings.provider": "AI Provider",

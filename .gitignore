@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 proofreader-styles.json
+
+**/.DS_Store
+.DS_Store

@@ -35,25 +35,75 @@ import {
   setHistoryEnabled,
 } from "./lib/history"
 import { type SanitisedError, sanitiseError } from "./lib/errors"
-import { humaniseText, type AntiAiConfig, DEFAULT_ANTI_AI_CONFIG, ERROR_LABELS, ERROR_TYPE_KEYS, PHRASING_TYPE_KEYS } from "./lib/humanise"
+import { humaniseText, DEFAULT_ANTI_AI_CONFIG } from "./lib/humanise"
 import { getIconComponent, getStyleButtonStyles } from "./lib/style-options"
-import { Copy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2, History, ChevronRight, EyeOff, Search, Fingerprint, Download, Upload } from "lucide-react"
+import { Copy, ClipboardCopy, Check, Loader2, Settings, X, Eraser, Zap, Brain, SlidersHorizontal, Coffee, Heart, Sun, Moon, Monitor, Info, ChevronDown, ChevronLeft, AlertTriangle, Wand2, Code2, Trash2, History, ChevronRight, EyeOff, Search, Download, Upload } from "lucide-react"
 import { useI18n } from "./context/I18nContext"
 import { LOCALE_IDS, LOCALE_NAMES, type Locale } from "./lib/i18n"
 
 const CELEBRATE_KEY = "proofreader_celebrate"
-const ANTI_AI_KEY = "proofreader_anti_ai"
 const HIDE_DONATION_KEY = "proofreader_hide_donation"
 const AUTO_SHOW_KEY = "proofreader_auto_show"
 const AUTO_ENABLED_KEY = "proofreader_auto_enabled"
 const AUTO_PASTE_KEY = "proofreader_auto_paste"
 const AUTO_TYPE_KEY = "proofreader_auto_type"
 const AUTO_DELAY_KEY = "proofreader_auto_delay"
+const AUTO_COPY_KEY = "proofreader_auto_copy"
 const BMC_URL = "https://buymeacoffee.com/marknotton"
 const THEME_KEY = "proofreader_theme"
 type Theme = "light" | "dark" | "auto"
 const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
 const SUBMIT_SHORTCUT = isMac ? "⌘↵" : "Ctrl+↵"
+
+const LOCALE_SHORT: Record<string, string> = {
+  "en-GB": "British", "en-US": "American", "en-AU": "Australian",
+  "en-CA": "Canadian", "en-NZ": "New Zealand", "en-IE": "Irish", "en-ZA": "South African",
+}
+
+function StyleTooltip({ style, provider }: { style: ProofreadStyle; provider: ProviderId }) {
+  const providerCfg = PROVIDERS[provider].thinking
+  const thinkingVal = getStyleThinking(style, provider)
+  // Extract AI model name from label e.g. "Google (Gemini)" → "Gemini"
+  const aiName = PROVIDERS[provider].label.match(/\((.+)\)/)?.[1] ?? PROVIDERS[provider].name
+
+  let thinkingLabel: string | null = null
+  if (providerCfg.supported && providerCfg.type !== "none") {
+    if (providerCfg.type === "effort") {
+      const labels = providerCfg.effortLabels || ["Low", "Medium", "High"]
+      thinkingLabel = `${aiName}: ${labels[thinkingVal] ?? "Low"}`
+    } else {
+      thinkingLabel = thinkingVal === 0
+        ? `${aiName}: No thinking`
+        : `${aiName}: ${thinkingVal >= 1024 ? `${thinkingVal / 1024}k` : thinkingVal} tokens`
+    }
+  }
+
+  const truncPrompt = style.prompt.length > 100
+    ? style.prompt.slice(0, 100).trimEnd() + "…"
+    : style.prompt
+
+  const tags = [
+    style.spellingLocale && style.spellingLocale !== "none" ? LOCALE_SHORT[style.spellingLocale] ?? style.spellingLocale : null,
+    style.markdown ? "Markdown" : null,
+    style.antiAi?.enabled ? "Anti-AI" : null,
+    thinkingLabel,
+  ].filter(Boolean) as string[]
+
+  return (
+    <div className="absolute top-full left-0 z-50 mt-1.5 w-56 rounded-lg border border-border bg-card text-card-foreground shadow-md p-2.5 flex flex-col gap-2 pointer-events-none">
+      <p className="text-[11px] text-muted-foreground leading-snug">{truncPrompt}</p>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {tags.map((tag) => (
+            <span key={tag} className="text-[9px] font-medium uppercase tracking-wide bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme)
@@ -65,7 +115,7 @@ function getChromeAPI(): any | null {
   return c?.storage ? c : null
 }
 
-type SettingsView = "closed" | "settings" | "styles" | "provider" | "history" | "history-detail" | "anti-ai"
+type SettingsView = "closed" | "settings" | "styles" | "provider" | "history" | "history-detail"
 
 export default function App() {
   const { t, locale, changeLocale } = useI18n()
@@ -104,6 +154,10 @@ export default function App() {
   const [historySearch, setHistorySearch] = useState("")
   const [incognito, setIncognito] = useState(false)
 
+  // ── Style tooltip hover state ──
+  const [hoveredStyle, setHoveredStyle] = useState<string | null>(null)
+  const styleHoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // ── Backup dialog state ──
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [exportIncludeKeys, setExportIncludeKeys] = useState(false)
@@ -111,28 +165,18 @@ export default function App() {
   const backupFileInputRef = useRef<HTMLInputElement>(null)
   const [importMessage, setImportMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
-  // ── Anti-AI Detection state ──
-  const [antiAiConfig, setAntiAiConfig] = useState<AntiAiConfig>(() => {
-    const saved = localStorage.getItem(ANTI_AI_KEY)
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        return {
-          ...DEFAULT_ANTI_AI_CONFIG,
-          ...parsed,
-          errors: { ...DEFAULT_ANTI_AI_CONFIG.errors, ...(parsed.errors ?? {}) },
-          thresholds: parsed.thresholds ?? DEFAULT_ANTI_AI_CONFIG.thresholds,
-        }
-      } catch {}
-    }
-    return DEFAULT_ANTI_AI_CONFIG
-  })
+  // ── Reset dialog state ──
+  const [showResetDialog, setShowResetDialog] = useState(false)
+  const [resetKeepKeys, setResetKeepKeys] = useState(false)
+  const [resetKeepHistory, setResetKeepHistory] = useState(false)
+  const [resetKeepStyles, setResetKeepStyles] = useState(true)
 
   // ── Auto-proofread state ──
   const [autoShow, setAutoShow] = useState(() => localStorage.getItem(AUTO_SHOW_KEY) !== "false") // visible by default
   const [autoEnabled, setAutoEnabled] = useState(() => localStorage.getItem(AUTO_ENABLED_KEY) === "true") // off by default
   const [autoPaste, setAutoPaste] = useState(() => localStorage.getItem(AUTO_PASTE_KEY) !== "false") // on by default when auto is shown
   const [autoType, setAutoType] = useState(() => localStorage.getItem(AUTO_TYPE_KEY) === "true") // off by default
+  const [autoCopy, setAutoCopy] = useState(() => localStorage.getItem(AUTO_COPY_KEY) === "true")
   const [autoDelay, setAutoDelay] = useState(() => {
     const saved = localStorage.getItem(AUTO_DELAY_KEY)
     return saved ? Math.max(1, Math.min(30, Number(saved))) : 3
@@ -160,7 +204,13 @@ export default function App() {
   useEffect(() => { tRef.current = t }, [t])
   const celebrateEnabledRef = useRef(celebrateEnabled)
   useEffect(() => { celebrateEnabledRef.current = celebrateEnabled }, [celebrateEnabled])
+  const autoCopyRef = useRef(autoCopy)
+  useEffect(() => { autoCopyRef.current = autoCopy }, [autoCopy])
   const pendingModeRef = useRef<{ mode: "proofread" | "replace"; tabId?: number } | null>(null)
+  const clearedInputRef = useRef<string | null>(null)
+
+  const DEMO_CHAR_LIMIT = 700
+  const isInDemo = DEMO_ENABLED && !apiKey
 
   const providerConfig = PROVIDERS[provider]
   const currentStyle = styles.find((s) => s.name === activeStyle)
@@ -184,6 +234,7 @@ export default function App() {
     if (!text.trim()) return
     if (!key && !isDemo) return   // no key and demo disabled — do nothing
     if (isDemo && !hasDemoRemaining()) return
+    if (isDemo && text.trim().length > DEMO_CHAR_LIMIT) return
 
     // If a styleName was passed (e.g. from context menu), use that — the React
     // state may not have flushed yet
@@ -201,6 +252,14 @@ export default function App() {
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
+
+    // In demo mode, nudge user towards getting an API key if response is slow
+    let demoSlowTimer: ReturnType<typeof setTimeout> | null = null
+    if (isDemo) {
+      demoSlowTimer = setTimeout(() => {
+        showToastRef.current("Adding your own API key gives almost instant responses")
+      }, 2000)
+    }
 
     try {
       let result = ""
@@ -245,9 +304,16 @@ export default function App() {
         .replace(/^\s*\[TEXT\s*START\]\s*/i, "")
         .replace(/\s*\[TEXT\s*END\]\s*$/i, "")
 
-      // Inject human-like errors if Anti-AI Detection is enabled
-      result = humaniseText(result, antiAiConfig)
+      // Inject human-like errors if Anti-AI Detection is enabled (per-style config)
+      result = humaniseText(result, style?.antiAi ?? DEFAULT_ANTI_AI_CONFIG)
       setOutput(result)
+
+      // Auto-copy to clipboard if enabled (suppress toast in demo mode)
+      if (autoCopyRef.current && result.trim()) {
+        navigator.clipboard.writeText(result).then(() => {
+          if (!isDemo) showToast(tRef.current("toast.autoCopied"))
+        }).catch(() => {})
+      }
 
       // Save to history (skip in incognito mode)
       if (historyEnabled && !incognito && result.trim()) {
@@ -318,10 +384,11 @@ export default function App() {
         setShowRawError(false)
       }
     } finally {
+      if (demoSlowTimer) clearTimeout(demoSlowTimer)
       setLoading(false)
       pendingModeRef.current = null
     }
-  }, [apiKey, provider, activeStyle, styles, thinkingOverride, showToast, historyEnabled, incognito, antiAiConfig])
+  }, [apiKey, provider, activeStyle, styles, thinkingOverride, showToast, historyEnabled, incognito])
 
   // Keep a ref to the latest runProofread so the storage listener (which never
   // re-subscribes) always calls the current version.
@@ -545,6 +612,7 @@ export default function App() {
   useEffect(() => { runProofreadRef.current = wrappedRunProofread }, [wrappedRunProofread])
 
   const handleInputChange = useCallback((value: string) => {
+    if (isInDemo && value.length > DEMO_CHAR_LIMIT) value = value.slice(0, DEMO_CHAR_LIMIT)
     setInput(value)
     // If this was a paste event, isPasteRef will be true (set in onPaste)
     if (isPasteRef.current) {
@@ -552,6 +620,7 @@ export default function App() {
       if (autoEnabled && autoPaste && hasSignificantChanges(value, lastProofreadTextRef.current)) {
         clearAutoTimer()
         lastProofreadTextRef.current = value
+        if (!isInDemo) showToast(tRef.current("toast.autoPaste"))
         // Small delay for state to settle
         setTimeout(() => runProofreadRef.current(value), 50)
       }
@@ -602,14 +671,32 @@ export default function App() {
     localStorage.setItem(AUTO_DELAY_KEY, String(clamped))
   }, [])
 
-  // ── Anti-AI Detection persistence ──
-  const handleAntiAiChange = useCallback((updater: (prev: AntiAiConfig) => AntiAiConfig) => {
-    setAntiAiConfig((prev) => {
-      const next = updater(prev)
-      localStorage.setItem(ANTI_AI_KEY, JSON.stringify(next))
-      return next
-    })
-  }, [])
+  // ── Reset all settings ──
+  const handleReset = useCallback(() => {
+    const keysToKeep: string[] = []
+    if (resetKeepKeys) PROVIDER_IDS.forEach((id) => keysToKeep.push(providerKeyStorageKey(id)))
+    if (resetKeepHistory) keysToKeep.push("proofreader_history", "proofreader_history_enabled")
+    if (resetKeepStyles) keysToKeep.push("proofreader_styles")
+
+    // Snapshot values to retain
+    const retained: Record<string, string> = {}
+    for (const key of keysToKeep) {
+      const val = localStorage.getItem(key)
+      if (val !== null) retained[key] = val
+    }
+
+    // Wipe all proofreader keys
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("proofreader_"))
+      .forEach((k) => localStorage.removeItem(k))
+
+    // Restore retained values
+    for (const [key, val] of Object.entries(retained)) {
+      localStorage.setItem(key, val)
+    }
+
+    window.location.reload()
+  }, [resetKeepKeys, resetKeepHistory, resetKeepStyles])
 
   // ── Backup export ──
   const handleExportBackup = useCallback(() => {
@@ -627,8 +714,8 @@ export default function App() {
         autoPaste: localStorage.getItem(AUTO_PASTE_KEY),
         autoType: localStorage.getItem(AUTO_TYPE_KEY),
         autoDelay: localStorage.getItem(AUTO_DELAY_KEY),
+        autoCopy: localStorage.getItem(AUTO_COPY_KEY),
         historyEnabled: localStorage.getItem("proofreader_history_enabled"),
-        antiAi: localStorage.getItem(ANTI_AI_KEY),
       },
       styles: styles,
     }
@@ -679,8 +766,8 @@ export default function App() {
           [AUTO_PASTE_KEY]: s.autoPaste,
           [AUTO_TYPE_KEY]: s.autoType,
           [AUTO_DELAY_KEY]: s.autoDelay,
+          [AUTO_COPY_KEY]: s.autoCopy,
           proofreader_history_enabled: s.historyEnabled,
-          [ANTI_AI_KEY]: s.antiAi,
         }
         for (const [key, val] of Object.entries(settingsMap)) {
           if (val != null) localStorage.setItem(key, val)
@@ -713,13 +800,8 @@ export default function App() {
         if (s.autoPaste != null) setAutoPaste(s.autoPaste !== "false")
         if (s.autoType != null) setAutoType(s.autoType === "true")
         if (s.autoDelay != null) setAutoDelay(Math.max(1, Math.min(30, Number(s.autoDelay))))
+        if (s.autoCopy != null) setAutoCopy(s.autoCopy === "true")
         if (s.historyEnabled != null) setHistoryEnabledState(s.historyEnabled !== "false")
-        if (s.antiAi) {
-          try {
-            const parsed = JSON.parse(s.antiAi)
-            setAntiAiConfig({ ...DEFAULT_ANTI_AI_CONFIG, ...parsed, errors: { ...DEFAULT_ANTI_AI_CONFIG.errors, ...(parsed.errors ?? {}) } })
-          } catch {}
-        }
         if (s.provider && PROVIDERS[s.provider as ProviderId]) {
           setProvider(s.provider as ProviderId)
         }
@@ -795,6 +877,29 @@ export default function App() {
     lastProofreadTextRef.current = ""
     lastAutoHistoryIdRef.current = null
   }, [clearAutoTimer])
+
+  // Escape when idle clears input (with undo via Cmd/Ctrl+Z)
+  useEffect(() => {
+    if (loading) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName
+      const isTyping = tag === "INPUT" || tag === "SELECT"
+      if (isTyping) return
+
+      if (e.key === "Escape" && (input || output)) {
+        clearedInputRef.current = input
+        handleClear()
+        return
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "z" && clearedInputRef.current !== null) {
+        e.preventDefault()
+        setInput(clearedInputRef.current)
+        clearedInputRef.current = null
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [loading, input, output, handleClear])
 
   // ── Thinking slider display logic ──
   const renderThinkingSlider = () => {
@@ -1055,165 +1160,6 @@ export default function App() {
     )
   }
 
-  // ── Anti-AI Detection view ──
-  if (settingsView === "anti-ai") {
-    return (
-      <div className="flex flex-col h-screen bg-background text-foreground">
-        <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-border shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setSettingsView("settings")} className="shrink-0">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Fingerprint className="h-4 w-4 text-muted-foreground shrink-0" />
-          <h2 className="text-sm font-semibold flex-1">{t("antiAi.title")}</h2>
-          <Switch
-            checked={antiAiConfig.enabled}
-            onCheckedChange={(v) => handleAntiAiChange((p) => ({ ...p, enabled: v }))}
-          />
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col gap-4 p-3">
-
-            <p className="text-xs text-muted-foreground leading-relaxed">{t("antiAi.desc")}</p>
-
-            {/* Humanisation types */}
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("antiAi.types")}</p>
-              <div className={`rounded-lg border border-input bg-card flex flex-col divide-y divide-border transition-opacity ${!antiAiConfig.enabled ? "opacity-40 pointer-events-none" : ""}`}>
-
-                {/* Phrasing types — humanisePhrasing + hedging */}
-                {PHRASING_TYPE_KEYS.map((key) => {
-                  const err = antiAiConfig.errors[key]
-                  const meta = ERROR_LABELS[key]
-                  return (
-                    <div key={key} className="flex flex-col gap-2 px-3 py-2.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium">{meta.label}</p>
-                          <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{meta.desc}</p>
-                        </div>
-                        <Switch
-                          checked={err.enabled}
-                          onCheckedChange={(v) => handleAntiAiChange((p) => ({
-                            ...p,
-                            errors: { ...p.errors, [key]: { ...p.errors[key], enabled: v } },
-                          }))}
-                        />
-                      </div>
-                      {err.enabled && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-muted-foreground shrink-0 w-10">{t("antiAi.weight")}</span>
-                          <input
-                            type="range" min={1} max={5} step={1}
-                            value={err.weight}
-                            onChange={(e) => handleAntiAiChange((p) => ({
-                              ...p,
-                              errors: { ...p.errors, [key]: { ...p.errors[key], weight: Number(e.target.value) } },
-                            }))}
-                            className="flex-1 h-1.5 accent-primary"
-                          />
-                          <span className="text-[11px] text-muted-foreground w-3 text-right tabular-nums">{err.weight}</span>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-
-                {/* Include Errors toggle row */}
-                <div className="flex flex-col">
-                  <div className="flex items-start justify-between gap-3 px-3 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">{t("antiAi.includeErrors")}</p>
-                      <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{t("antiAi.includeErrorsDesc")}</p>
-                    </div>
-                    <Switch
-                      checked={antiAiConfig.includeErrors}
-                      onCheckedChange={(v) => handleAntiAiChange((p) => ({ ...p, includeErrors: v }))}
-                    />
-                  </div>
-
-                  {/* Errors revealed when includeErrors is on */}
-                  {antiAiConfig.includeErrors && (
-                    <div className="border-t border-border flex flex-col">
-
-                      {/* Error frequency thresholds */}
-                      <div className="px-3 py-2.5 flex flex-col gap-2 border-b border-border bg-muted/20">
-                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("antiAi.frequency")}</p>
-                        {antiAiConfig.thresholds.map((threshold, i) => {
-                          const label = threshold.minWords === 0
-                            ? `< ${threshold.maxWords} words`
-                            : threshold.maxWords >= 9999
-                              ? `${threshold.minWords}+ words`
-                              : `${threshold.minWords}–${threshold.maxWords} words`
-                          return (
-                            <div key={i} className="flex items-center gap-2.5">
-                              <span className="text-[11px] text-muted-foreground w-24 shrink-0">{label}</span>
-                              <input
-                                type="range" min={0} max={10} step={1}
-                                value={threshold.count}
-                                onChange={(e) => handleAntiAiChange((p) => ({
-                                  ...p,
-                                  thresholds: p.thresholds.map((t, j) => j === i ? { ...t, count: Number(e.target.value) } : t),
-                                }))}
-                                className="flex-1 h-1.5 accent-primary"
-                              />
-                              <span className="text-[11px] text-muted-foreground w-4 text-right tabular-nums">{threshold.count}</span>
-                            </div>
-                          )
-                        })}
-                      </div>
-
-                      {/* Individual error types */}
-                      {ERROR_TYPE_KEYS.map((key) => {
-                        const err = antiAiConfig.errors[key]
-                        const meta = ERROR_LABELS[key]
-                        return (
-                          <div key={key} className="flex flex-col gap-2 px-3 py-2.5 border-b border-border last:border-b-0">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium">{meta.label}</p>
-                                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{meta.desc}</p>
-                              </div>
-                              <Switch
-                                checked={err.enabled}
-                                onCheckedChange={(v) => handleAntiAiChange((p) => ({
-                                  ...p,
-                                  errors: { ...p.errors, [key]: { ...p.errors[key], enabled: v } },
-                                }))}
-                              />
-                            </div>
-                            {err.enabled && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] text-muted-foreground shrink-0 w-10">{t("antiAi.weight")}</span>
-                                <input
-                                  type="range" min={1} max={5} step={1}
-                                  value={err.weight}
-                                  onChange={(e) => handleAntiAiChange((p) => ({
-                                    ...p,
-                                    errors: { ...p.errors, [key]: { ...p.errors[key], weight: Number(e.target.value) } },
-                                  }))}
-                                  className="flex-1 h-1.5 accent-primary"
-                                />
-                                <span className="text-[11px] text-muted-foreground w-3 text-right tabular-nums">{err.weight}</span>
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   // ── Style manager view ──
   if (settingsView === "styles") {
     return (
@@ -1338,11 +1284,11 @@ export default function App() {
 
     return (
       <div className="flex flex-col h-screen bg-background text-foreground">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-input shrink-0">
-          <h2 className="font-semibold">{t("settings.title")}</h2>
-          <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")} aria-label="Close settings">
-            <X className="h-4 w-4" />
+        <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-border shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setSettingsView("closed")} aria-label="Back" className="shrink-0">
+            <ChevronLeft className="h-4 w-4" />
           </Button>
+          <h2 className="text-sm font-semibold flex-1">{t("settings.title")}</h2>
         </div>
 
         <div className="flex-1 overflow-auto p-4 flex flex-col gap-5">
@@ -1491,74 +1437,57 @@ export default function App() {
             )}
 
             {/* Auto-proofread */}
-            <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <div>
-                <p className="text-sm">{t("settings.autoShow")}</p>
-                <p className="text-xs text-muted-foreground">{t("settings.autoShowDesc")}</p>
-              </div>
-              <Switch checked={autoShow} onCheckedChange={handleAutoShowToggle} />
-            </label>
+            <div className={isInDemo ? "opacity-50 pointer-events-none" : ""}>
+              <div className="flex flex-col gap-3">
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <div>
+                    <p className="text-sm flex items-center gap-1.5">
+                      {t("settings.autoShow")}
+                      {isInDemo && (
+                        <span className="text-[9px] font-medium uppercase tracking-wide bg-muted text-muted-foreground px-1.5 py-0.5 rounded">Requires API key</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{t("settings.autoShowDesc")}</p>
+                  </div>
+                  <Switch checked={autoShow} onCheckedChange={handleAutoShowToggle} />
+                </label>
 
-            <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
-              <div>
-                <p className="text-sm">{t("settings.autoPaste")}</p>
-                <p className="text-xs text-muted-foreground">{t("settings.autoPasteDesc")}</p>
-              </div>
-              <Switch checked={autoPaste} onCheckedChange={handleAutoPasteToggle} />
-            </label>
+                <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
+                  <div>
+                    <p className="text-sm">{t("settings.autoPaste")}</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.autoPasteDesc")}</p>
+                  </div>
+                  <Switch checked={autoPaste} onCheckedChange={handleAutoPasteToggle} />
+                </label>
 
-            <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
-              <div>
-                <p className="text-sm">{t("settings.autoType")}</p>
-                <p className="text-xs text-muted-foreground">{t("settings.autoTypeDesc")}</p>
-              </div>
-              <Switch checked={autoType} onCheckedChange={handleAutoTypeToggle} />
-            </label>
+                <label className={`flex items-center justify-between gap-3 ${autoShow ? "cursor-pointer" : "opacity-40 pointer-events-none"}`}>
+                  <div>
+                    <p className="text-sm">{t("settings.autoType")}</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.autoTypeDesc")}</p>
+                  </div>
+                  <Switch checked={autoType} onCheckedChange={handleAutoTypeToggle} />
+                </label>
 
-            {autoShow && autoType && (
-              <div className="flex items-center gap-3 pl-1">
-                <label className="text-xs text-muted-foreground shrink-0">{t("settings.autoDelay")}</label>
-                <input
-                  type="range" min={1} max={15} step={1} value={autoDelay}
-                  onChange={(e) => handleAutoDelayChange(Number(e.target.value))}
-                  className="flex-1 h-1.5 accent-primary"
-                />
-                <span className="text-xs text-muted-foreground w-8 text-right">{autoDelay}s</span>
-              </div>
-            )}
-
-            {autoShow && autoType && (
-              <div className="flex items-start gap-2 rounded-md bg-destructive/5 border border-destructive/20 p-2.5">
-                <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" aria-hidden="true" />
-                <p className="text-[11px] text-muted-foreground leading-relaxed">{t("settings.autoWarning")}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Anti-AI Detection */}
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("antiAi.title")}</p>
-            <button
-              onClick={() => setSettingsView("anti-ai")}
-              className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-3 py-2.5 text-sm hover:bg-accent/50 transition-colors text-left"
-            >
-              <div className="flex items-center gap-2.5">
-                <Fingerprint className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-xs font-medium flex items-center gap-1.5">
-                    {t("antiAi.enable")}
-                    <span className="text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Beta</span>
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">{t("antiAi.enableDesc")}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {antiAiConfig.enabled && (
-                  <span className="text-[10px] font-medium uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">On</span>
+                {autoShow && autoType && (
+                  <div className="flex items-center gap-3 pl-1">
+                    <label className="text-xs text-muted-foreground shrink-0">{t("settings.autoDelay")}</label>
+                    <input
+                      type="range" min={1} max={15} step={1} value={autoDelay}
+                      onChange={(e) => handleAutoDelayChange(Number(e.target.value))}
+                      className="flex-1 h-1.5 accent-primary"
+                    />
+                    <span className="text-xs text-muted-foreground w-8 text-right">{autoDelay}s</span>
+                  </div>
                 )}
-                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+
+                {autoShow && autoType && (
+                  <div className="flex items-start gap-2 rounded-md bg-destructive/5 border border-destructive/20 p-2.5">
+                    <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" aria-hidden="true" />
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{t("settings.autoWarning")}</p>
+                  </div>
+                )}
               </div>
-            </button>
+            </div>
           </div>
 
           {/* Styles */}
@@ -1680,7 +1609,66 @@ export default function App() {
             )}
           </div>
 
+          {/* Reset */}
+          <div className="flex justify-end pt-1 pb-2">
+            <button
+              onClick={() => setShowResetDialog(true)}
+              className="text-[11px] text-muted-foreground/40 hover:text-destructive transition-colors hover:underline underline-offset-2"
+            >
+              Reset all settings
+            </button>
+          </div>
+
         </div>
+
+        {/* Reset dialog */}
+        {showResetDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowResetDialog(false)}>
+            <div className="bg-background border border-input rounded-lg shadow-lg w-[280px] p-4 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-sm">Reset all settings</h3>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowResetDialog(false)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Resets everything back to a clean slate — as if freshly installed. Choose what to keep below.
+              </p>
+              <div className="flex flex-col gap-3">
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <div>
+                    <p className="text-sm">Retain styles</p>
+                    <p className="text-[11px] text-muted-foreground">Keep your custom proofreading styles</p>
+                  </div>
+                  <Switch checked={resetKeepStyles} onCheckedChange={setResetKeepStyles} />
+                </label>
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <div>
+                    <p className="text-sm">Retain history</p>
+                    <p className="text-[11px] text-muted-foreground">Keep your proofreading history</p>
+                  </div>
+                  <Switch checked={resetKeepHistory} onCheckedChange={setResetKeepHistory} />
+                </label>
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <div>
+                    <p className="text-sm">Retain API keys</p>
+                    <p className="text-[11px] text-muted-foreground">Keep your saved provider keys</p>
+                  </div>
+                  <Switch checked={resetKeepKeys} onCheckedChange={setResetKeepKeys} />
+                </label>
+              </div>
+              <div className="flex flex-col gap-2 pt-1">
+                <Button size="sm" variant="destructive" onClick={handleReset}>
+                  Reset now
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowResetDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     )
   }
@@ -1734,19 +1722,33 @@ export default function App() {
           const colorStyles = getStyleButtonStyles(style.color, isActive)
 
           return (
-            <Button
+            <div
               key={style.name}
-              variant={colorStyles ? "outline" : isActive ? "default" : "outline"}
-              size="sm"
-              style={colorStyles}
-              onClick={() => {
-                setActiveStyle(style.name)
-                setThinkingOverride(null)
+              className="relative"
+              onMouseEnter={() => {
+                styleHoverTimerRef.current = setTimeout(() => setHoveredStyle(style.name), 700)
+              }}
+              onMouseLeave={() => {
+                if (styleHoverTimerRef.current) clearTimeout(styleHoverTimerRef.current)
+                setHoveredStyle(null)
               }}
             >
-              {IconComp && <IconComp className="h-3.5 w-3.5" />}
-              {style.name}
-            </Button>
+              <Button
+                variant={colorStyles ? "outline" : isActive ? "default" : "outline"}
+                size="sm"
+                style={colorStyles}
+                onClick={() => {
+                  setActiveStyle(style.name)
+                  setThinkingOverride(null)
+                }}
+              >
+                {IconComp && <IconComp className="h-3.5 w-3.5" />}
+                {style.name}
+              </Button>
+              {hoveredStyle === style.name && (
+                <StyleTooltip style={style} provider={provider} />
+              )}
+            </div>
           )
         })}
         <div className={`ml-auto flex items-center gap-0.5 rounded-lg border px-0.5 py-0.5 transition-colors ${incognito ? "border-primary/40 bg-primary/5" : "border-input/60 bg-muted/20"}`}>
@@ -1847,8 +1849,13 @@ export default function App() {
             }}
             placeholder={t("placeholder")}
             aria-label={t("placeholder")}
-            className="h-full text-sm"
+            className={`h-full text-sm ${isInDemo ? "pb-6" : ""}`}
           />
+          {isInDemo && (
+            <span className={`absolute bottom-2 right-2.5 text-[10px] tabular-nums pointer-events-none ${input.length >= DEMO_CHAR_LIMIT ? "text-destructive" : "text-muted-foreground/50"}`}>
+              {input.length}/{DEMO_CHAR_LIMIT}
+            </span>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -1936,23 +1943,7 @@ export default function App() {
           <div aria-live="polite" aria-label="Proofread output" className="contents">
             <Card className="flex-1 min-h-[120px] overflow-auto">
               <CardContent className="relative" ref={outputRef}>
-                {!(currentStyle?.markdown && output.includes("```")) && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 h-7 w-7"
-                    onClick={handleCopy}
-                    title={t("copy")}
-                    aria-label={t("copy")}
-                  >
-                    {copied ? (
-                      <Check className="h-3.5 w-3.5 text-green-500" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                )}
-                <div className={!(currentStyle?.markdown && output.includes("```")) ? "pr-8" : ""}>
+                <div>
                   <MarkdownOutput text={output} markdown={currentStyle?.markdown} />
                 </div>
                 {currentStyle?.markdown && output.includes("```") && (
@@ -1965,13 +1956,26 @@ export default function App() {
                 )}
               </CardContent>
             </Card>
-            <Button variant="outline" onClick={handleCopy} className="w-full">
-              {copied ? (
-                <><Check className="h-4 w-4 text-green-500" /> {t("copy")}</>
-              ) : (
-                <><Copy className="h-4 w-4" /> {t("copy")}</>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCopy} className="flex-1">
+                {copied ? (
+                  <><Check className="h-4 w-4 text-green-500" /> {t("copy")}</>
+                ) : (
+                  <><Copy className="h-4 w-4" /> {t("copy")}</>
+                )}
+              </Button>
+              <Button
+                variant={autoCopy ? "default" : "outline"}
+                size="icon"
+                onClick={() => { const next = !autoCopy; setAutoCopy(next); localStorage.setItem(AUTO_COPY_KEY, String(next)) }}
+                title={autoCopy ? "Auto-copy on" : "Auto-copy off"}
+                aria-label={autoCopy ? "Auto-copy on" : "Auto-copy off"}
+                aria-pressed={autoCopy}
+                className={autoCopy ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+              >
+                <ClipboardCopy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>

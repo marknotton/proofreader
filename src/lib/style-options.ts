@@ -10,6 +10,7 @@ import {
   Music, Camera, Compass, Anchor, Coffee,
   Bug, CircleCheck, ListChecks, Bookmark, Tags,
   Handshake, Scale, Mic, Glasses, Sigma,
+  Fingerprint, Smile, UserRound, Languages, Zap, Bell, Lock, Search,
   type LucideIcon,
 } from "lucide-react"
 
@@ -83,6 +84,17 @@ export const STYLE_ICONS: IconOption[] = [
   { name: "check", icon: CircleCheck },
   { name: "checklist", icon: ListChecks },
   { name: "tags", icon: Tags },
+  // People & identity
+  { name: "smile", icon: Smile },
+  { name: "user", icon: UserRound },
+  { name: "fingerprint", icon: Fingerprint },
+  // Language & discovery
+  { name: "languages", icon: Languages },
+  { name: "search", icon: Search },
+  // Utility
+  { name: "zap", icon: Zap },
+  { name: "bell", icon: Bell },
+  { name: "lock", icon: Lock },
 ]
 
 const iconMap = new Map(STYLE_ICONS.map((o) => [o.name, o.icon]))

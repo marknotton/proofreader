@@ -139,9 +139,9 @@ export const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[]
  * Grok: unused (0)
  */
 export const DEFAULT_THINKING_BY_PROVIDER: Record<ProviderId, number> = {
-  gemini: 1024,
-  openai: 1,
-  claude: 1,
+  gemini: 0,
+  openai: 0,
+  claude: 0,
   grok: 0,
 }
 

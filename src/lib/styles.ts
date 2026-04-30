@@ -1,4 +1,5 @@
 import { type ProviderId, PROVIDERS, DEFAULT_THINKING_BY_PROVIDER } from "./providers"
+import { type AntiAiConfig, DEFAULT_ANTI_AI_CONFIG } from "./humanise"
 
 /**
  * Spelling locale variant appended to the style prompt.
@@ -70,6 +71,8 @@ export interface ProofreadStyle {
   markdown?: boolean
   /** Regional spelling convention appended to the prompt */
   spellingLocale?: SpellingLocale
+  /** Per-style Anti-AI Detection config */
+  antiAi?: AntiAiConfig
 }
 
 /**
@@ -125,6 +128,29 @@ export const DEFAULT_STYLES: ProofreadStyle[] = [
     thinkingByProvider: { gemini: 0, openai: 0, claude: 0, grok: 0 },
     prompt:
       "Rewrite the following text in a formal, polished, professional tone. Fix any grammar or spelling errors.",
+  },
+  {
+    name: "Humanise",
+    icon: "smile",
+    thinkingByProvider: { gemini: 0, openai: 0, claude: 0, grok: 0 },
+    prompt:
+      "Fix any grammar, spelling, and punctuation errors in the following text. Preserve the original tone and wording as much as possible.",
+    antiAi: {
+      ...DEFAULT_ANTI_AI_CONFIG,
+      enabled: true,
+      includeErrors: true,
+      errors: {
+        ...DEFAULT_ANTI_AI_CONFIG.errors,
+        doubleSpace:    { enabled: true, weight: 3 },
+        aAn:            { enabled: true, weight: 3 },
+        lowercaseStart: { enabled: true, weight: 2 },
+        doublePeriod:   { enabled: true, weight: 2 },
+        thenThan:       { enabled: true, weight: 2 },
+        missingHyphen:  { enabled: true, weight: 2 },
+        repeatedWord:   { enabled: true, weight: 3 },
+        looseLose:      { enabled: true, weight: 1 },
+      },
+    },
   },
 ]
 

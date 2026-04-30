@@ -66,14 +66,18 @@ function removeContextMenus() {
   chrome.contextMenus.removeAll()
 }
 
+let syncDebounceTimer = null
 function syncContextMenus() {
-  chrome.storage.local.get("contextMenuEnabled", (result) => {
-    if (result.contextMenuEnabled === true) {
-      createContextMenus()
-    } else {
-      removeContextMenus()
-    }
-  })
+  clearTimeout(syncDebounceTimer)
+  syncDebounceTimer = setTimeout(() => {
+    chrome.storage.local.get("contextMenuEnabled", (result) => {
+      if (result.contextMenuEnabled === true) {
+        createContextMenus()
+      } else {
+        removeContextMenus()
+      }
+    })
+  }, 100)
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
