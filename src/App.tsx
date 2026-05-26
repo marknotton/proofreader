@@ -1956,7 +1956,14 @@ export default function App() {
                 )}
               </CardContent>
             </Card>
-            <div className="flex gap-2">
+            <div className="relative flex gap-2">
+              {toast && (
+                <div className="absolute -top-9 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-toast-up">
+                  <div className="bg-[#FBBA00] text-primary-foreground text-sm font-medium px-4 py-2 rounded-lg shadow-xl whitespace-nowrap">
+                    {toast}
+                  </div>
+                </div>
+              )}
               <Button variant="outline" onClick={handleCopy} className="flex-1">
                 {copied ? (
                   <><Check className="h-4 w-4 text-green-500" /> {t("copy")}</>
@@ -1979,15 +1986,6 @@ export default function App() {
           </div>
         )}
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-toast-up">
-          <div className="bg-[#FBBA00] text-primary-foreground text-sm font-medium px-4 py-2 rounded-lg shadow-xl whitespace-nowrap">
-            {toast}
-          </div>
-        </div>
-      )}
 
       {/* Subtle donation footer */}
       {!hideDonation && (
